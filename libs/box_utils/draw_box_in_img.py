@@ -134,7 +134,7 @@ def draw_box_cv(img, boxes, labels, scores):
         label = labels[i]
         if label != 0:
             num_of_object += 1
-            # color = (np.random.randint(255), np.random.randint(255), np.random.randint(255))
+            color = (np.random.randint(255), np.random.randint(255), np.random.randint(255))
             color = (0, 255, 0)
             cv2.rectangle(img,
                           pt1=(xmin, ymin),
@@ -144,32 +144,32 @@ def draw_box_cv(img, boxes, labels, scores):
 
             category = LABEl_NAME_MAP[label]
 
-            # if scores is not None:
-            #     cv2.rectangle(img,
-            #                   pt1=(xmin, ymin),
-            #                   pt2=(xmin+150, ymin+15),
-            #                   color=color,
-            #                   thickness=-1)
-            #     cv2.putText(img,
-            #                 text=category+": "+str(scores[i]),
-            #                 org=(xmin, ymin+10),
-            #                 fontFace=1,
-            #                 fontScale=1,
-            #                 thickness=2,
-            #                 color=(color[1], color[2], color[0]))
-            # else:
-            #     cv2.rectangle(img,
-            #                   pt1=(xmin, ymin),
-            #                   pt2=(xmin + 40, ymin + 15),
-            #                   color=color,
-            #                   thickness=-1)
-            #     cv2.putText(img,
-            #                 text=category,
-            #                 org=(xmin, ymin + 10),
-            #                 fontFace=1,
-            #                 fontScale=1,
-            #                 thickness=2,
-            #                 color=(color[1], color[2], color[0]))
+            if scores is not None:
+                cv2.rectangle(img,
+                              pt1=(xmin, ymin),
+                              pt2=(xmin+150, ymin+15),
+                              color=color,
+                              thickness=-1)
+                cv2.putText(img,
+                            text=category+": "+str(scores[i]),
+                            org=(xmin, ymin+10),
+                            fontFace=1,
+                            fontScale=1,
+                            thickness=2,
+                            color=(color[1], color[2], color[0]))
+            else:
+                cv2.rectangle(img,
+                              pt1=(xmin, ymin),
+                              pt2=(xmin + 40, ymin + 15),
+                              color=color,
+                              thickness=-1)
+                cv2.putText(img,
+                            text=category,
+                            org=(xmin, ymin + 10),
+                            fontFace=1,
+                            fontScale=1,
+                            thickness=2,
+                            color=(color[1], color[2], color[0]))
     cv2.putText(img,
                 text=str(num_of_object),
                 org=((img.shape[1]) // 2, (img.shape[0]) // 2),
@@ -193,7 +193,7 @@ def draw_rotate_box_cv(img, boxes, labels, scores):
         label = labels[i]
         if label != 0:
             num_of_object += 1
-            # color = (np.random.randint(255), np.random.randint(255), np.random.randint(255))
+            color = (np.random.randint(255), np.random.randint(255), np.random.randint(255))
             color = (0, 255, 0)
             rect = ((x_c, y_c), (w, h), theta)
             rect = cv2.boxPoints(rect)
@@ -202,32 +202,32 @@ def draw_rotate_box_cv(img, boxes, labels, scores):
 
             category = LABEl_NAME_MAP[label]
 
-            # if scores is not None:
-            #     cv2.rectangle(img,
-            #                   pt1=(x_c, y_c),
-            #                   pt2=(x_c + 120, y_c + 15),
-            #                   color=color,
-            #                   thickness=-1)
-            #     cv2.putText(img,
-            #                 text=category+": "+str(scores[i]),
-            #                 org=(x_c, y_c+10),
-            #                 fontFace=1,
-            #                 fontScale=1,
-            #                 thickness=2,
-            #                 color=(color[1], color[2], color[0]))
-            # else:
-            #     cv2.rectangle(img,
-            #                   pt1=(x_c, y_c),
-            #                   pt2=(x_c + 40, y_c + 15),
-            #                   color=color,
-            #                   thickness=-1)
-            #     cv2.putText(img,
-            #                 text=category,
-            #                 org=(x_c, y_c + 10),
-            #                 fontFace=1,
-            #                 fontScale=1,
-            #                 thickness=2,
-            #                 color=(color[1], color[2], color[0]))
+            if scores is not None:
+                cv2.rectangle(img,
+                              pt1=(x_c, y_c),
+                              pt2=(x_c + 120, y_c + 15),
+                              color=color,
+                              thickness=-1)
+                cv2.putText(img,
+                            text=category+": "+str(scores[i]),
+                            org=(x_c, y_c+10),
+                            fontFace=1,
+                            fontScale=1,
+                            thickness=2,
+                            color=(color[1], color[2], color[0]))
+            else:
+                cv2.rectangle(img,
+                              pt1=(x_c, y_c),
+                              pt2=(x_c + 40, y_c + 15),
+                              color=color,
+                              thickness=-1)
+                cv2.putText(img,
+                            text=category,
+                            org=(x_c, y_c + 10),
+                            fontFace=1,
+                            fontScale=1,
+                            thickness=2,
+                            color=(color[1], color[2], color[0]))
     cv2.putText(img,
                 text=str(num_of_object),
                 org=((img.shape[1]) // 2, (img.shape[0]) // 2),

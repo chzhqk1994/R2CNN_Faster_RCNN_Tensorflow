@@ -42,7 +42,7 @@ TEST_ANNOTATION_PATH = '/mnt/USBB/gx/DOTA/DOTA_clip/val/labeltxt'
 # ------------------------------------------ Train config
 RESTORE_FROM_RPN = False
 IS_FILTER_OUTSIDE_BOXES = True
-ROTATE_NMS_USE_GPU = True
+ROTATE_NMS_USE_GPU = False
 FIXED_BLOCKS = 2  # allow 0~3
 
 RPN_LOCATION_LOSS_WEIGHT = 1 / 7
