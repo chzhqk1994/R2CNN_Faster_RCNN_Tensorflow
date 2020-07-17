@@ -119,7 +119,8 @@ if __name__ == '__main__':
     print('Called with args:')
     print(args)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 
     det_net = build_whole_network.DetectionNetwork(base_network_name=cfgs.NET_NAME,
                                                    is_training=False)

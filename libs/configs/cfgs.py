@@ -7,12 +7,13 @@ import tensorflow as tf
 # ------------------------------------------------
 VERSION = 'FasterRCNN_20180515_DOTA_v3'
 NET_NAME = 'resnet_v1_101'
+EVAL_NET_NAME = 'resnet_v1_101'
 ADD_BOX_IN_TENSORBOARD = True
 # ---------------------------------------- System_config
 ROOT_PATH = os.path.abspath('../')
 print(20*"++--")
 print(ROOT_PATH)
-GPU_GROUP = "2"
+GPU_GROUP = "0"
 SHOW_TRAIN_INFO_INTE = 10
 SMRY_ITER = 100
 SAVE_WEIGHTS_INTE = 2000
@@ -31,6 +32,8 @@ else:
 
 PRETRAINED_CKPT = ROOT_PATH + '/data/pretrained_weights/' + weights_name + '.ckpt'
 TRAINED_CKPT = os.path.join(ROOT_PATH, 'output/trained_weights')
+RESTORE_CKPT = os.path.join(ROOT_PATH, 'weight_to_export')
+
 
 EVALUATE_H_DIR = ROOT_PATH + '/output' + '/evaluate_h_result_pickle/' + VERSION
 EVALUATE_R_DIR = ROOT_PATH + '/output' + '/evaluate_r_result_pickle/' + VERSION
@@ -61,11 +64,11 @@ DECAY_STEP = [60000, 120000]  # 90000, 120000
 MAX_ITERATION = 1000000
 
 # -------------------------------------------- Data_preprocess_config
-DATASET_NAME = 'DOTA'  # 'ship', 'spacenet', 'pascal', 'coco'
+DATASET_NAME = 'ROOF' #  'DOTA', 'ship', 'spacenet', 'pascal', 'coco'
 PIXEL_MEAN = [123.68, 116.779, 103.939]  # R, G, B. In tf, channel is RGB. In openCV, channel is BGR
-IMG_SHORT_SIDE_LEN = 800
-IMG_MAX_LENGTH = 1000
-CLASS_NUM = 15
+IMG_SHORT_SIDE_LEN = 640
+IMG_MAX_LENGTH = 640
+CLASS_NUM = 3
 
 # --------------------------------------------- Network_config
 BATCH_SIZE = 1
@@ -113,7 +116,8 @@ FAST_RCNN_IOU_NEGATIVE_THRESHOLD = 0.0   # 0.1 < IOU < 0.5 is negative
 FAST_RCNN_MINIBATCH_SIZE = 256  # if is -1, that is train with OHEM
 FAST_RCNN_POSITIVE_RATE = 0.35
 
-ADD_GTBOXES_TO_TRAIN = False
+ADD_GTBOXES_TO_TRAIN = True
+
 
 
 
