@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/ubuntu/R2CNN_Faster-RCNN_Tensorflow/output/trained_weights/FasterRCNN_20180515_DOTA_v3/voc_9714003model.ckpt"
+all_model_checkpoint_paths: "/home/ubuntu/R2CNN_Faster-RCNN_Tensorflow/output/trained_weights/FasterRCNN_20180515_DOTA_v3/voc_9714003model.ckpt"
