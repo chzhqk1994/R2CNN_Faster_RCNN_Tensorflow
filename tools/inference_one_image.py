@@ -71,10 +71,14 @@ class R2CNN:
         self.sess = tf.Session(config=self.config)
         self.sess.run(self.init_op)
 
+        self.restorer.restore(self.sess, self.restore_ckpt)
+        print('AI Model Restored.')
+
+
     def inference(self, image):
-        if not self.restorer is None:
-            self.restorer.restore(self.sess, self.restore_ckpt)
-            print('restore model')
+        # if not self.restorer is None:
+        #     self.restorer.restore(self.sess, self.restore_ckpt)
+        #     print('restore model')
 
         inference_start = time.time()
 
@@ -86,21 +90,22 @@ class R2CNN:
                 feed_dict={self.img_plac: image}
             )
         inference_end = time.time()
+        inference_time = inference_end - inference_start
+        print('R2CNN inference time : ', inference_time)
 
-        print('R2CNN inference time : ', inference_end - inference_start)
-        det_detections_r = draw_box_in_img.draw_rotate_box_cv(np.squeeze(resized_img, 0),
+        result_image = draw_box_in_img.draw_rotate_box_cv(np.squeeze(resized_img, 0),
                                                               boxes=det_boxes_r_,
                                                               labels=det_category_r_,
                                                               scores=det_scores_r_)
 
-        return det_detections_r
+        return result_image, inference_time
 
 
 if __name__ == '__main__':
     img = cv2.imread('./inference_image/img_108.jpg')
 
     obj = R2CNN(gpu=0)
-    result_img = obj.inference(img)
-    result_img2 = obj.inference(img)
-    result_img3 = obj.inference(img)
+    result_img, inference_time = obj.inference(img)
+    result_img2, inference_time2 = obj.inference(img)
+    result_img3, inference_time3 = obj.inference(img)
     cv2.imwrite('test.jpg', result_img3)
