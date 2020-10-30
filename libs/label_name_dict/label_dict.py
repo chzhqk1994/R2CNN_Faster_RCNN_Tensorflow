@@ -67,7 +67,9 @@ elif cfgs.DATASET_NAME == 'ROOF':
         'back_ground': 0,
         'goodroof': 1,
         'solarpanel': 2,
-        'parkinglot': 3
+        'parkinglot': 3,
+        'facility': 4,
+        'rooftop': 5
     }
 
 else:
