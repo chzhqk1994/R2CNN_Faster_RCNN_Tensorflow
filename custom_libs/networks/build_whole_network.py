@@ -23,8 +23,9 @@ from libs.box_utils import nms_rotate
 
 class DetectionNetwork(object):
 
-    def __init__(self, base_network_name, is_training):
+    def __init__(self, model_path, base_network_name, is_training):
 
+        self.model_path = model_path
         self.base_network_name = base_network_name
         self.is_training = is_training
         self.num_anchors_per_location = len(cfgs.ANCHOR_SCALES) * len(cfgs.ANCHOR_RATIOS)
@@ -566,7 +567,8 @@ class DetectionNetwork(object):
                    final_boxes_r, final_scores_r, final_category_r, loss_dict
 
     def get_restorer(self, model_path):
-        checkpoint_path = tf.train.latest_checkpoint(model_path)
+        # checkpoint_path = tf.train.latest_checkpoint(model_path)
+        checkpoint_path = self.model_path
 
         if checkpoint_path != None:
             if cfgs.RESTORE_FROM_RPN:

@@ -30,7 +30,7 @@ class R2CNN:
         self.config = None
         self.sess = None
         self.gpu = str(gpu)
-        self.det_net = build_whole_network.DetectionNetwork(base_network_name=cfgs.NET_NAME,
+        self.det_net = build_whole_network.DetectionNetwork(model_path=self.model_path, base_network_name=cfgs.NET_NAME,
                                                             is_training=False)
 
         self.img_plac = None
@@ -104,7 +104,7 @@ class R2CNN:
 
 if __name__ == '__main__':
     img = cv2.imread('./inference_image/img_108.jpg')
-    model_path = "../output/trained_weights/FasterRCNN_20180515_DOTA_v3/"
+    model_path = "../trained_model/voc_140000model.ckpt"
     obj = R2CNN(model_path, gpu=0)
     result_img, inference_time = obj.inference(img)
     result_img2, inference_time2 = obj.inference(img)
