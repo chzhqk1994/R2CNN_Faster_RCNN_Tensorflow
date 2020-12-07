@@ -21,19 +21,19 @@ def mkdir(path):
         os.makedirs(path)
 
 
-# def video2gif(video_file):
-#     cap = cv2.VideoCapture(video_file)
-#     imgs = []
-#     ret,frame = cap.read()
-#     frame = frame[:, :, ::-1]
-#     while ret:
-#         imgs.append(frame)
-#         ret, frame = cap.read()
-#         try:
-#             frame = frame[:, :, ::-1]
-#         except TypeError:
-#             break
-#     imageio.mimsave(video_file.replace(video_file.split('.')[-1],'gif'), imgs[10:],duration=1/20.0)
+def video2gif(video_file):
+    cap = cv2.VideoCapture(video_file)
+    imgs = []
+    ret,frame = cap.read()
+    frame = frame[:, :, ::-1]
+    while ret:
+        imgs.append(frame)
+        ret, frame = cap.read()
+        try:
+            frame = frame[:, :, ::-1]
+        except TypeError:
+            break
+    imageio.mimsave(video_file.replace(video_file.split('.')[-1],'gif'), imgs[10:],duration=1/20.0)
 
 # if __name__ == '__main__':
 #     video_file = './demo1.avi'

@@ -10,6 +10,7 @@ import cv2
 from libs.label_name_dict.label_dict import *
 from help_utils.tools import *
 
+
 tf.app.flags.DEFINE_string('VOC_dir', '/root/userfolder/yx/', 'Voc dir')
 tf.app.flags.DEFINE_string('xml_dir', 'icdar2015_xml', 'xml dir')
 tf.app.flags.DEFINE_string('image_dir', 'icdar2015_img', 'image dir')
@@ -57,18 +58,49 @@ def read_xml_gtbox_and_label(xml_path):
             for child_item in child_of_root:
                 if child_item.tag == 'name':
                     label = NAME_LABEL_MAP[child_item.text]
+					
                 if child_item.tag == 'bndbox':
-                    tmp_box = []
+                    tmp_box = np.empty(9, dtype=object)
                     for node in child_item:
-                        tmp_box.append(int(node.text))
+                        if node.tag == 'xmin': tmp_box[0] = int(round(float(node.text))) 
+                        if node.tag == 'xmin': tmp_box[6] = int(round(float(node.text))) 
+                        if node.tag == 'ymin': tmp_box[1] = int(round(float(node.text))) 
+                        if node.tag == 'ymin': tmp_box[3] = int(round(float(node.text))) 
+                        if node.tag == 'xmax': tmp_box[2] = int(round(float(node.text))) 
+                        if node.tag == 'xmax': tmp_box[4] = int(round(float(node.text))) 
+                        if node.tag == 'ymax': tmp_box[5] = int(round(float(node.text))) 
+                        if node.tag == 'ymax': tmp_box[7] = int(round(float(node.text))) 
+                    print(label)
                     assert label is not None, 'label is none, error'
-                    tmp_box.append(label)
+                    tmp_box[8] = label
                     box_list.append(tmp_box)
+					
+                if child_item.tag == 'robndbox':
+                    tmp_box = np.empty(9, dtype=object)
 
+                    for node in child_item:
+                        if node.tag == 'cx' or node.tag == 'cy' or node.tag == 'h' or node.tag == 'w' or node.tag == 'angle':
+                            continue
+                        if node.tag == 'x0': tmp_box[0] = int(round(float(node.text))) 
+                        if node.tag == 'y0': tmp_box[1] = int(round(float(node.text))) 
+                        if node.tag == 'x1': tmp_box[2] = int(round(float(node.text))) 
+                        if node.tag == 'y1': tmp_box[3] = int(round(float(node.text))) 
+                        if node.tag == 'x2': tmp_box[4] = int(round(float(node.text))) 
+                        if node.tag == 'y2': tmp_box[5] = int(round(float(node.text))) 
+                        if node.tag == 'x3': tmp_box[6] = int(round(float(node.text))) 
+                        if node.tag == 'y3': tmp_box[7] = int(round(float(node.text)))
+						
+                    assert label is not None, 'label is none, error't
+					tmp_box[8] = label
+					box_list.append(tmp_box)
+
+    if len(box_list) == 0:
+        print("NULL {}", xml_path)
+
+    print(box_list)
     gtbox_label = np.array(box_list, dtype=np.int32)
-
-    return img_height, img_width, gtbox_label
-
+    print(gtbox_label)
+	return img_height, img_width, gtbox_label
 
 def convert_pascal_to_tfrecord():
     xml_path = FLAGS.VOC_dir + FLAGS.xml_dir
@@ -76,15 +108,31 @@ def convert_pascal_to_tfrecord():
     save_path = FLAGS.save_dir + FLAGS.dataset + '_' + FLAGS.save_name + '.tfrecord'
     mkdir(FLAGS.save_dir)
 
+    print(xml_path)
+    print(image_path)
+
     # writer_options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.ZLIB)
     # writer = tf.python_io.TFRecordWriter(path=save_path, options=writer_options)
     writer = tf.python_io.TFRecordWriter(path=save_path)
     for count, xml in enumerate(glob.glob(xml_path + '/*.xml')):
+        print(xml)
         # to avoid path error in different development platform
         xml = xml.replace('\\', '/')
 
-        img_name = xml.split('/')[-1].split('.')[0] + FLAGS.img_format
+        img_name_temp = xml.split('/')[-1]
+
+        img_name_temp2 = img_name_temp[:-4]
+        img_name = img_name_temp2 + FLAGS.img_format
+       
         img_path = image_path + '/' + img_name
+        print(img_path)
+
+        if not os.path.exists(xml_path):
+            #print(xml_path)
+            print('No annotation, skip')
+            continue
+        else:
+            print('ANNOTATION FOUND')
 
         if not os.path.exists(img_path):
             print('{} is not exist!'.format(img_path))

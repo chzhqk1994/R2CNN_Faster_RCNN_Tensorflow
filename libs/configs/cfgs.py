@@ -34,7 +34,6 @@ PRETRAINED_CKPT = ROOT_PATH + '/data/pretrained_weights/' + weights_name + '.ckp
 TRAINED_CKPT = os.path.join(ROOT_PATH, 'output/trained_weights')
 RESTORE_CKPT = os.path.join(ROOT_PATH, 'weight_to_export')
 
-
 EVALUATE_H_DIR = ROOT_PATH + '/output' + '/evaluate_h_result_pickle/' + VERSION
 EVALUATE_R_DIR = ROOT_PATH + '/output' + '/evaluate_r_result_pickle/' + VERSION
 TEST_ANNOTATION_PATH = '/mnt/USBB/gx/DOTA/DOTA_clip/val/labeltxt'
@@ -42,7 +41,7 @@ TEST_ANNOTATION_PATH = '/mnt/USBB/gx/DOTA/DOTA_clip/val/labeltxt'
 # ------------------------------------------ Train config
 RESTORE_FROM_RPN = False
 IS_FILTER_OUTSIDE_BOXES = True
-ROTATE_NMS_USE_GPU = False
+ROTATE_NMS_USE_GPU = True
 FIXED_BLOCKS = 2  # allow 0~3
 
 RPN_LOCATION_LOSS_WEIGHT = 1 / 7

@@ -41,12 +41,31 @@ def train():
         gtboxes_and_label_AreaRectangle = get_horizen_minAreaRectangle(gtboxes_and_label)
         gtboxes_and_label_AreaRectangle = tf.reshape(gtboxes_and_label_AreaRectangle, [-1, 5])
 
+        eval_img_name_batch, eval_img_batch, eval_gtboxes_and_label_batch, eval_num_objects_batch = \
+            next_batch(dataset_name=cfgs.DATASET_NAME,  # 'pascal', 'coco'
+                       batch_size=cfgs.BATCH_SIZE,
+                       shortside_len=cfgs.IMG_SHORT_SIDE_LEN,
+                       is_training=False)
+
+        eval_gtboxes_and_label = tf.py_func(back_forward_convert,
+                                       inp=[tf.squeeze(eval_gtboxes_and_label_batch, 0)],
+                                       Tout=tf.float32)
+        eval_gtboxes_and_label = tf.reshape(eval_gtboxes_and_label, [-1, 6])
+
+        eval_gtboxes_and_label_AreaRectangle = get_horizen_minAreaRectangle(eval_gtboxes_and_label)
+        eval_gtboxes_and_label_AreaRectangle = tf.reshape(eval_gtboxes_and_label_AreaRectangle, [-1, 5])
     with tf.name_scope('draw_gtboxes'):
         gtboxes_in_img = draw_box_with_color(img_batch, tf.reshape(gtboxes_and_label_AreaRectangle, [-1, 5])[:, :-1],
                                              text=tf.shape(gtboxes_and_label_AreaRectangle)[0])
 
         gtboxes_rotate_in_img = draw_box_with_color_rotate(img_batch, tf.reshape(gtboxes_and_label, [-1, 6])[:, :-1],
                                                            text=tf.shape(gtboxes_and_label)[0])
+														   
+        eval_gtboxes_in_img = draw_box_with_color(eval_img_batch, tf.reshape(eval_gtboxes_and_label_AreaRectangle, [-1, 5])[:, :-1],
+                                             text=tf.shape(eval_gtboxes_and_label_AreaRectangle)[0])
+
+        eval_gtboxes_rotate_in_img = draw_box_with_color_rotate(eval_img_batch, tf.reshape(eval_gtboxes_and_label, [-1, 6])[:, :-1],
+                                                           text=tf.shape(eval_gtboxes_and_label)[0])
 
     biases_regularizer = tf.no_regularizer
     weights_regularizer = tf.contrib.layers.l2_regularizer(cfgs.WEIGHT_DECAY)

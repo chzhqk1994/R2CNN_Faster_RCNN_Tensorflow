@@ -80,14 +80,26 @@ def parse_rec(filename):
     obj_struct['pose'] = obj.find('pose').text
     obj_struct['truncated'] = int(obj.find('truncated').text)
     obj_struct['difficult'] = int(obj.find('difficult').text)
-    bbox = obj.find('bndbox')
-    rbox = [int(bbox.find('x0').text), int(bbox.find('y0').text), int(bbox.find('x1').text),
-            int(bbox.find('y1').text), int(bbox.find('x2').text), int(bbox.find('y2').text),
-            int(bbox.find('x3').text), int(bbox.find('y3').text)]
-    rbox = np.array([rbox], np.float32)
-    rbox = coordinate_convert.back_forward_convert(rbox, with_label=False)
-    obj_struct['bbox'] = rbox
-    objects.append(obj_struct)
+
+    try:
+      try:
+        bbox = obj.find('robndbox')
+        #print('!!!RRR')
+        #print(bbox)
+      except:
+        bbox = obj.find('bndbox')
+        #print('@@@RRR')
+        #print(bbox)
+
+      rbox = [int(bbox.find('x0').text), int(bbox.find('y0').text), int(bbox.find('x1').text),
+              int(bbox.find('y1').text), int(bbox.find('x2').text), int(bbox.find('y2').text),
+              int(bbox.find('x3').text), int(bbox.find('y3').text)]
+      rbox = np.array([rbox], np.float32)
+      rbox = coordinate_convert.back_forward_convert(rbox, with_label=False)
+      obj_struct['bbox'] = rbox
+      objects.append(obj_struct)
+    except:
+      continue
 
   return objects
 
@@ -251,7 +263,11 @@ def do_python_eval(test_imgid_list, test_annotation_path):
   import matplotlib.pyplot as plt
 
   AP_list = []
+  mAP_list = []
+  mPrecision_list = []
+  mRecall_list = []
   for cls, index in NAME_LABEL_MAP.items():
+    print(cls)
     if cls == 'back_ground':
       continue
     recall, precision, AP = voc_eval(detpath=cfgs.EVALUATE_R_DIR,
@@ -259,11 +275,33 @@ def do_python_eval(test_imgid_list, test_annotation_path):
                                      cls_name=cls,
                                      annopath=test_annotation_path)
     AP_list += [AP]
-    print("cls : {}|| Recall: {} || Precison: {}|| AP: {}".format(cls, recall[-1], precision[-1], AP))
-    # print("{}_ap: {}".format(cls, AP))
+    #precision_list += [precision]
+    #recall_list += [recall]
+    #print("cls : {}|| Recall: {} || Precison: {}|| AP: {}".format(cls, recall[-1], precision[-1], AP))
+
     # print("{}_recall: {}".format(cls, recall[-1]))
     # print("{}_precision: {}".format(cls, precision[-1]))
 
+    #print("cls : {}|| Recall: {} || Precison: {}|| AP: {}".format(cls, recall, precision, AP))
+    #print("{}_ap: {}".format(cls, AP))
+    #print("{}_recall: {}".format(cls, recall))
+    #print("{}_precision: {}".format(cls, precision))
+
+
+    #mAP_cls = np.mean(AP_list)
+    mPrecision_cls = np.mean(precision)
+    mRecall_cls = np.mean(recall)
+    #print("{}_mAP: {}".format(cls, mAP_cls))
+    print("{}_AP: {}".format(cls, AP))	
+    print("{}_mRecall: {}".format(cls, mRecall_cls))
+    print("{}_mPrecision: {}".format(cls, mPrecision_cls))
+
+    mAP_list += [AP]
+    mPrecision_list += [mPrecision_cls]
+    mRecall_list += [mRecall_cls]
+
+
+    print(mAP_list, mRecall_list, mPrecision_list)
     c = colors.cnames.keys()
     c_dark = list(filter(lambda x: x.startswith('dark'), c))
     c = ['red', 'orange']
@@ -271,11 +309,21 @@ def do_python_eval(test_imgid_list, test_annotation_path):
     plt.plot(recall, precision, color=c_dark[index], label=cls)
 
   plt.legend(loc='upper right')
-  plt.xlabel('R')
-  plt.ylabel('P')
+  plt.xlabel('Recall')
+  plt.ylabel('Precision')
   plt.savefig('./PR_R.png')
 
-  print("mAP is : {}".format(np.mean(AP_list)))
+  print(mAP_list, mRecall_list, mPrecision_list)
+  total_mAP = np.mean(mAP_list)
+  total_mRecall = np.mean(mRecall_list)
+  total_mPrecision = np.mean(mPrecision_list)
+  #mPrecision = np.mean(precision_list)
+  #mRecall = np.mean(recall_list)
+  print("mAP_H is : {}".format(total_mAP))
+  print("mRecall_H is : {}".format(total_mRecall))
+  print("mPrecision_H is : {}".format(total_mPrecision))
+  #print(mAP, recall, precision)
+  return total_mAP, total_mRecall, total_mPrecision, mAP_list, mRecall_list, mPrecision_list
 
 
 def voc_evaluate_detections(all_boxes, test_imgid_list, test_annotation_path):
@@ -290,7 +338,8 @@ def voc_evaluate_detections(all_boxes, test_imgid_list, test_annotation_path):
 
   write_voc_results_file(all_boxes, test_imgid_list=test_imgid_list,
                          det_save_dir=cfgs.EVALUATE_R_DIR)
-  do_python_eval(test_imgid_list, test_annotation_path)
+  mAP, recall, precision, total_AP, total_recall, total_precision = do_python_eval(test_imgid_list, test_annotation_path)
+  return mAP, recall, precision, total_AP, total_recall, total_precision
 
 
 

@@ -70,9 +70,9 @@ def next_batch(dataset_name, batch_size, shortside_len, is_training):
     img_batch: shape:(1, new_imgH, new_imgW, C)
     gtboxes_and_label_batch: shape(1, Num_Of_objects, 5] .each row is [x1, y1, x2, y2, label]
     '''
-    assert batch_size == 1, "we only support batch_size is 1.We may support large batch_size in the future"
+    # assert batch_size == 1, "we only support batch_size is 1.We may support large batch_size in the future"
 
-    if dataset_name not in ['DOTA', 'ship', 'ICDAR2015', 'pascal', 'coco', 'DOTA_TOTAL', 'FDDB']:
+    if dataset_name not in ['DOTA', 'ROOF', 'ship', 'ICDAR2015', 'pascal', 'coco', 'DOTA_TOTAL', 'FDDB']:
         raise ValueError('dataSet name must be in pascal, coco spacenet and ship')
 
     if is_training:
