@@ -258,14 +258,19 @@ def voc_eval(detpath, annopath, test_imgid_list, cls_name, ovthresh=0.5,
   return rec, prec, ap
 
 
+def get_values_from_dict(dict):
+  value_list = list(dict.values())
+
+  return value_list
+
+
 def do_python_eval(test_imgid_list, test_annotation_path):
   import matplotlib.colors as colors
   import matplotlib.pyplot as plt
 
-  AP_list = []
-  mAP_list = []
-  mPrecision_list = []
-  mRecall_list = []
+  mAP_dict = {}
+  mPrecision_dict = {}
+  mRecall_dict = {}
   for cls, index in NAME_LABEL_MAP.items():
     print(cls)
     if cls == 'back_ground':
@@ -274,34 +279,17 @@ def do_python_eval(test_imgid_list, test_annotation_path):
                                      test_imgid_list=test_imgid_list,
                                      cls_name=cls,
                                      annopath=test_annotation_path)
-    AP_list += [AP]
-    #precision_list += [precision]
-    #recall_list += [recall]
-    #print("cls : {}|| Recall: {} || Precison: {}|| AP: {}".format(cls, recall[-1], precision[-1], AP))
 
-    # print("{}_recall: {}".format(cls, recall[-1]))
-    # print("{}_precision: {}".format(cls, precision[-1]))
+    Precision_cls = np.mean(precision)
+    Recall_cls = np.mean(recall)
+    print("{}_AP: {}".format(cls, AP))
+    print("{}_mRecall: {}".format(cls, Recall_cls))
+    print("{}_mPrecision: {}".format(cls, Precision_cls))
 
-    #print("cls : {}|| Recall: {} || Precison: {}|| AP: {}".format(cls, recall, precision, AP))
-    #print("{}_ap: {}".format(cls, AP))
-    #print("{}_recall: {}".format(cls, recall))
-    #print("{}_precision: {}".format(cls, precision))
+    mAP_dict[cls] = AP
+    mPrecision_dict[cls] = Precision_cls
+    mRecall_dict[cls] = Recall_cls
 
-
-    #mAP_cls = np.mean(AP_list)
-    mPrecision_cls = np.mean(precision)
-    mRecall_cls = np.mean(recall)
-    #print("{}_mAP: {}".format(cls, mAP_cls))
-    print("{}_AP: {}".format(cls, AP))	
-    print("{}_mRecall: {}".format(cls, mRecall_cls))
-    print("{}_mPrecision: {}".format(cls, mPrecision_cls))
-
-    mAP_list += [AP]
-    mPrecision_list += [mPrecision_cls]
-    mRecall_list += [mRecall_cls]
-
-
-    print(mAP_list, mRecall_list, mPrecision_list)
     c = colors.cnames.keys()
     c_dark = list(filter(lambda x: x.startswith('dark'), c))
     c = ['red', 'orange']
@@ -313,17 +301,15 @@ def do_python_eval(test_imgid_list, test_annotation_path):
   plt.ylabel('Precision')
   plt.savefig('./PR_R.png')
 
-  print(mAP_list, mRecall_list, mPrecision_list)
-  total_mAP = np.mean(mAP_list)
-  total_mRecall = np.mean(mRecall_list)
-  total_mPrecision = np.mean(mPrecision_list)
-  #mPrecision = np.mean(precision_list)
-  #mRecall = np.mean(recall_list)
+  print(mAP_dict, mRecall_dict, mPrecision_dict)
+  total_mAP = np.mean(get_values_from_dict(mAP_dict))
+  total_mRecall = np.mean(get_values_from_dict(mRecall_dict))
+  total_mPrecision = np.mean(get_values_from_dict(mPrecision_dict))
+
   print("mAP_H is : {}".format(total_mAP))
   print("mRecall_H is : {}".format(total_mRecall))
   print("mPrecision_H is : {}".format(total_mPrecision))
-  #print(mAP, recall, precision)
-  return total_mAP, total_mRecall, total_mPrecision, mAP_list, mRecall_list, mPrecision_list
+  return total_mAP, total_mRecall, total_mPrecision, mAP_dict, mRecall_dict, mPrecision_dict
 
 
 def voc_evaluate_detections(all_boxes, test_imgid_list, test_annotation_path):
@@ -340,157 +326,3 @@ def voc_evaluate_detections(all_boxes, test_imgid_list, test_annotation_path):
                          det_save_dir=cfgs.EVALUATE_R_DIR)
   mAP, recall, precision, total_AP, total_recall, total_precision = do_python_eval(test_imgid_list, test_annotation_path)
   return mAP, recall, precision, total_AP, total_recall, total_precision
-
-
-
-
-
-
-
-
-# def voc_eval(detpath,
-#              annopath,
-#              imagesetfile,
-#              classname,
-#              cachedir,
-#              ovthresh=0.5,
-#              use_07_metric=False,
-#              use_diff=False):
-#   """rec, prec, ap = voc_eval(detpath,
-#                               annopath,
-#                               imagesetfile,
-#                               classname,
-#                               [ovthresh],
-#                               [use_07_metric])
-#
-#   Top level function that does the PASCAL VOC evaluation.
-#
-#   detpath: Path to detections
-#       detpath.format(classname) should produce the detection results file.
-#   annopath: Path to annotations
-#       annopath.format(imagename) should be the xml annotations file.
-#   imagesetfile: Text file containing the list of images, one image per line.
-#   classname: Category name (duh)
-#   cachedir: Directory for caching the annotations
-#   [ovthresh]: Overlap threshold (default = 0.5)
-#   [use_07_metric]: Whether to use VOC07's 11 point AP computation
-#       (default False)
-#   """
-#   # assumes detections are in detpath.format(classname)
-#   # assumes annotations are in annopath.format(imagename)
-#   # assumes imagesetfile is a text file with each line an image name
-#   # cachedir caches the annotations in a pickle file
-#
-#   # first load gt
-#   if not os.path.isdir(cachedir):
-#     os.mkdir(cachedir)
-#   cachefile = os.path.join(cachedir, '%s_annots.pkl' % imagesetfile)
-#   # read list of images
-#   with open(imagesetfile, 'r') as f:
-#     lines = f.readlines()
-#   imagenames = [x.strip() for x in lines]
-#
-#   if not os.path.isfile(cachefile):
-#     # load annotations
-#     recs = {}
-#     for i, imagename in enumerate(imagenames):
-#       recs[imagename] = parse_rec(annopath.format(imagename))
-#       if i % 100 == 0:
-#         print('Reading annotation for {:d}/{:d}'.format(
-#           i + 1, len(imagenames)))
-#     # save
-#     print('Saving cached annotations to {:s}'.format(cachefile))
-#     with open(cachefile, 'w') as f:
-#       pickle.dump(recs, f)
-#   else:
-#     # load
-#     with open(cachefile, 'rb') as f:
-#       try:
-#         recs = pickle.load(f)
-#       except:
-#         recs = pickle.load(f, encoding='bytes')
-#
-#   # extract gt objects for this class
-#   class_recs = {}
-#   npos = 0
-#   for imagename in imagenames:
-#     R = [obj for obj in recs[imagename] if obj['name'] == classname]
-#     bbox = np.array([x['bbox'] for x in R])
-#     if use_diff:
-#       difficult = np.array([False for x in R]).astype(np.bool)
-#     else:
-#       difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
-#     det = [False] * len(R)
-#     npos = npos + sum(~difficult)
-#     class_recs[imagename] = {'bbox': bbox,
-#                              'difficult': difficult,
-#                              'det': det}
-#
-#   # read dets
-#   detfile = detpath.format(classname)
-#   with open(detfile, 'r') as f:
-#     lines = f.readlines()
-#
-#   splitlines = [x.strip().split(' ') for x in lines]
-#   image_ids = [x[0] for x in splitlines]
-#   confidence = np.array([float(x[1]) for x in splitlines])
-#   BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
-#
-#   nd = len(image_ids)
-#   tp = np.zeros(nd)
-#   fp = np.zeros(nd)
-#
-#   if BB.shape[0] > 0:
-#     # sort by confidence
-#     sorted_ind = np.argsort(-confidence)
-#     sorted_scores = np.sort(-confidence)
-#     BB = BB[sorted_ind, :]
-#     image_ids = [image_ids[x] for x in sorted_ind]
-#
-#     # go down dets and mark TPs and FPs
-#     for d in range(nd):
-#       R = class_recs[image_ids[d]]
-#       bb = BB[d, :].astype(float)
-#       ovmax = -np.inf
-#       BBGT = R['bbox'].astype(float)
-#
-#       if BBGT.size > 0:
-#         # compute overlaps
-#         # intersection
-#         ixmin = np.maximum(BBGT[:, 0], bb[0])
-#         iymin = np.maximum(BBGT[:, 1], bb[1])
-#         ixmax = np.minimum(BBGT[:, 2], bb[2])
-#         iymax = np.minimum(BBGT[:, 3], bb[3])
-#         iw = np.maximum(ixmax - ixmin + 1., 0.)
-#         ih = np.maximum(iymax - iymin + 1., 0.)
-#         inters = iw * ih
-#
-#         # union
-#         uni = ((bb[2] - bb[0] + 1.) * (bb[3] - bb[1] + 1.) +
-#                (BBGT[:, 2] - BBGT[:, 0] + 1.) *
-#                (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
-#
-#         overlaps = inters / uni
-#         ovmax = np.max(overlaps)
-#         jmax = np.argmax(overlaps)
-#
-#       if ovmax > ovthresh:
-#         if not R['difficult'][jmax]:
-#           if not R['det'][jmax]:
-#             tp[d] = 1.
-#             R['det'][jmax] = 1
-#           else:
-#             fp[d] = 1.
-#       else:
-#         fp[d] = 1.
-#
-#   # compute precision recall
-#   fp = np.cumsum(fp)
-#   tp = np.cumsum(tp)
-#   rec = tp / float(npos)
-#   # avoid divide by zero in case the first detection matches a difficult
-#   # ground truth
-#   prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-#   ap = voc_ap(rec, prec, use_07_metric)
-#
-#   return rec, prec, ap
