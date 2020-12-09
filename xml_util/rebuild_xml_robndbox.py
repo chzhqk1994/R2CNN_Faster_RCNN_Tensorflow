@@ -1,7 +1,7 @@
 import os
 import math
 import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, ElementTree
 from xml.dom import minidom
 import shutil
 
@@ -35,8 +35,8 @@ def make_dir_list(src_dir_folder, src_dir, separated_dir):
 
 
 def rotatePoint(xc, yc, xp, yp, theta):
-    xoff = xp-xc
-    yoff = yp-yc
+    xoff = xp - xc
+    yoff = yp - yc
 
     cosTheta = math.cos(theta)
     sinTheta = math.sin(theta)
@@ -119,6 +119,12 @@ def build_xml_arch(parsed_xml):
                 x3, y3 = rotatePoint(cx, cy, cx - w / 2, cy + h / 2, -angle)
 
                 cx, cy, w, h, angle = str(cx), str(cy), str(w), str(h), str(angle)
+
+                # str() >> 좌표들을 xml로 저장하기 위해선 text 로 바꿔야 하기 때문에 str 로 묶음
+                # int() >> 좌표를 R2CNN 에선 정수형으로 변환하기 때문에 int 로 묶음
+                # float() >> 실수형 좌표를 정수로 바꾸기 위해 float 으로 먼저 형변환을 해줌 >> 왜 해야하는거지
+                x0, x1, x2, x3, y0, y1, y2, y3 = str(int(float(x0))), str(int(float(x1))), str(int(float(x2))), str(
+                    int(float(x3))), str(int(float(y0))), str(int(float(y1))), str(int(float(y2))), str(int(float(y3)))
 
             object_tag = SubElement(annotation, 'object')
             type = SubElement(object_tag, 'type')
@@ -217,7 +223,8 @@ def build_xml_arch(parsed_xml):
             y3_tag = SubElement(robndbox, 'y3')
             y3_tag.text = y3
 
-    result = prettify(annotation)
+    result = ElementTree(annotation)
+    # result = prettify(annotation)
     # print(result)
     # print('\n\n\n')
     return result
@@ -276,7 +283,8 @@ def walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list
                         shutil.copyfile(current_img_file, dst_img_file)
                         continue
 
-                    shutil.copyfile(current_anno_file, dst_anno_file)
+                    # shutil.copyfile(current_anno_file, dst_anno_file)
+                    new_xml_tree.write(dst_anno_file)
                     shutil.copyfile(current_img_file, dst_img_file)
 
                 except FileNotFoundError:
@@ -288,9 +296,11 @@ def walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list
 
 
 if __name__ == "__main__":
-    src_dir_folder = ['train', 'test', 'coa_origin']
+    # src_dir_folder = ['train', 'test', 'coa_origin']
+    src_dir_folder = ['rebuilt_coa_origin']
     src_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/'
-    separated_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/rebuilt_coa_origin/'
+    separated_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/rererebuilt_coa_origin/'
 
-    src_anno_dir_list, dst_anno_dir_list, src_img_dir_list, dst_img_dir_list = make_dir_list(src_dir_folder, src_dir, separated_dir)
+    src_anno_dir_list, dst_anno_dir_list, src_img_dir_list, dst_img_dir_list = make_dir_list(src_dir_folder, src_dir,
+                                                                                             separated_dir)
     walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list, dst_img_dir_list)
