@@ -321,7 +321,7 @@ if __name__ == '__main__':
     print('Called with args:')
     print(args)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     eval(np.inf, args.img_dir, args.image_ext, args.test_annotation_path)
 
