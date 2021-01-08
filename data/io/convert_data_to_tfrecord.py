@@ -89,10 +89,10 @@ def read_xml_gtbox_and_label(xml_path):
                         if node.tag == 'y2': tmp_box[5] = int(round(float(node.text))) 
                         if node.tag == 'x3': tmp_box[6] = int(round(float(node.text))) 
                         if node.tag == 'y3': tmp_box[7] = int(round(float(node.text)))
-						
-                    assert label is not None, 'label is none, error't
-					tmp_box[8] = label
-					box_list.append(tmp_box)
+
+                    assert label is not None, 'label is none, error'
+                    tmp_box[8] = label
+                    box_list.append(tmp_box)
 
     if len(box_list) == 0:
         print("NULL {}", xml_path)
@@ -100,7 +100,7 @@ def read_xml_gtbox_and_label(xml_path):
     print(box_list)
     gtbox_label = np.array(box_list, dtype=np.int32)
     print(gtbox_label)
-	return img_height, img_width, gtbox_label
+    return img_height, img_width, gtbox_label
 
 def convert_pascal_to_tfrecord():
     xml_path = FLAGS.VOC_dir + FLAGS.xml_dir
