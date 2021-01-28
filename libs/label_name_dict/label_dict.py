@@ -66,10 +66,11 @@ elif cfgs.DATASET_NAME == 'ROOF':
     NAME_LABEL_MAP = {
         'back_ground': 0,
         'goodroof': 1,
-    	'solarpanel': 2,
-    	'parkinglot': 3,
-    	'facility' : 4,
-    	'rooftop' : 5
+        'solarpanel_flat': 2,
+        'solarpanel_slope': 3,
+        'parkinglot': 4,
+        'facility': 5,
+        'rooftop': 6
     }
 
 else:

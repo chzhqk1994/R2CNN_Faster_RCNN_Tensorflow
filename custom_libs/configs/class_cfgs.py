@@ -68,7 +68,7 @@ DATASET_NAME = 'ROOF' #  'DOTA', 'ship', 'spacenet', 'pascal', 'coco'
 PIXEL_MEAN = [123.68, 116.779, 103.939]  # R, G, B. In tf, channel is RGB. In openCV, channel is BGR
 IMG_SHORT_SIDE_LEN = 640
 IMG_MAX_LENGTH = 640
-CLASS_NUM = 5
+CLASS_NUM = 6
 
 # --------------------------------------------- Network_config
 BATCH_SIZE = 1
