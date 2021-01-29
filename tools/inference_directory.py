@@ -114,5 +114,5 @@ if __name__ == '__main__':
             output_img = os.path.join(output_dir, file)
             print(img_path)
             img = cv2.imread(img_path)
-            result_img, _ = obj.inference(img)
+            img, _ = obj.inference(img)
             cv2.imwrite(output_img, img)
