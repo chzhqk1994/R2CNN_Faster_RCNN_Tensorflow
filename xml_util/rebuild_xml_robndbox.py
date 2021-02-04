@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 from xml.dom import minidom
 import shutil
+import cv2
 
 
 def is_exist_dir(dir):
@@ -45,7 +46,7 @@ def rotatePoint(xc, yc, xp, yp, theta):
     return str(xc + pResx), str(yc + pResy)
 
 
-def build_xml_arch(parsed_xml):
+def build_xml_arch(parsed_xml, current_img_file):
     label = ''
     cx = 0
     cy = 0
@@ -60,6 +61,8 @@ def build_xml_arch(parsed_xml):
     y1 = 0
     y2 = 0
     y3 = 0
+
+    height, width, channel = cv2.imread(current_img_file).shape
 
     annotation = Element('annotation')
 
@@ -78,11 +81,11 @@ def build_xml_arch(parsed_xml):
 
     size = SubElement(annotation, 'size')
     width = SubElement(size, 'width')
-    width.text = str(640)
+    width.text = str(width)
     height = SubElement(size, 'height')
-    height.text = str(640)
+    height.text = str(height)
     depth = SubElement(size, 'depth')
-    depth.text = str(3)
+    depth.text = str(channel)
 
     segmented = SubElement(annotation, 'segmented')
     segmented.text = '0'
@@ -230,7 +233,7 @@ def build_xml_arch(parsed_xml):
     return result
 
 
-def xml_parser(path, file):
+def xml_parser(path, file, current_img_file):
     xml_parse = {'folder': '', 'filename': '', 'path': '', 'objects': []}
 
     file_path = os.path.join(path, file)
@@ -253,7 +256,7 @@ def xml_parser(path, file):
     xml_parse['filename'] = tree.getroot().find('filename').text
     xml_parse['path'] = tree.getroot().find('path').text
 
-    new_xml_tree = build_xml_arch(xml_parse)
+    new_xml_tree = build_xml_arch(xml_parse, current_img_file)
 
     return new_xml_tree
 
@@ -277,7 +280,7 @@ def walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list
                 # To Do
                 try:
                     print(file)
-                    new_xml_tree = xml_parser(root, file)
+                    new_xml_tree = xml_parser(root, file, current_img_file)
 
                     if new_xml_tree is None:
                         shutil.copyfile(current_img_file, dst_img_file)
