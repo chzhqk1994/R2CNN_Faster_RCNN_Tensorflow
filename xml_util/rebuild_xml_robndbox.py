@@ -62,7 +62,7 @@ def build_xml_arch(parsed_xml, current_img_file):
     y2 = 0
     y3 = 0
 
-    height, width, channel = cv2.imread(current_img_file).shape
+    img_height, img_width, img_channel = cv2.imread(current_img_file).shape
 
     annotation = Element('annotation')
 
@@ -81,11 +81,11 @@ def build_xml_arch(parsed_xml, current_img_file):
 
     size = SubElement(annotation, 'size')
     width = SubElement(size, 'width')
-    width.text = str(width)
+    width.text = str(img_width)
     height = SubElement(size, 'height')
-    height.text = str(height)
+    height.text = str(img_height)
     depth = SubElement(size, 'depth')
-    depth.text = str(channel)
+    depth.text = str(img_channel)
 
     segmented = SubElement(annotation, 'segmented')
     segmented.text = '0'
@@ -300,9 +300,9 @@ def walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list
 
 if __name__ == "__main__":
     # src_dir_folder = ['train', 'test', 'coa_origin']
-    src_dir_folder = ['rebuilt_coa_origin']
-    src_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/'
-    separated_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/rererebuilt_coa_origin/'
+    src_dir_folder = ['train', 'coa_origin']
+    src_dir = '/home/qisens/Desktop/new_area2/area2_200_test/before_rebuild/'
+    separated_dir = '/home/qisens/Desktop/new_area2/area2_200_test/rebuilt/'
 
     src_anno_dir_list, dst_anno_dir_list, src_img_dir_list, dst_img_dir_list = make_dir_list(src_dir_folder, src_dir,
                                                                                              separated_dir)
