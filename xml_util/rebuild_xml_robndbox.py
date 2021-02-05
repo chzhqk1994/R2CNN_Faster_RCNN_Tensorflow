@@ -109,7 +109,7 @@ def build_xml_arch(parsed_xml, current_img_file):
                 y2 = obj.find('./robndbox/y2').text
                 y3 = obj.find('./robndbox/y3').text
             except AttributeError:
-                print("누락")
+                print("Found bndbox")
                 cx = float(cx)
                 cy = float(cy)
                 w = float(width)
@@ -173,11 +173,11 @@ def build_xml_arch(parsed_xml, current_img_file):
             # robndbox 를 다루기 때문에 중심, 세로, 높이를 계산해야 하지만 bndbox 는 회전각이 0도 이기때문에 max min 값을 그대로 사용가능
             # 중심, 세로, 높이를 중요시 하는 경우 0을 계산해서 수정.
             label = obj.find('name').text
-            cx = 0
-            cy = 0
-            width = 0
-            height = 0
-            angle = 0
+            cx = str(0)
+            cy = str(0)
+            width = str(0)
+            height = str(0)
+            angle = str(0)
             x0 = obj.find('./bndbox/xmin').text
             x1 = obj.find('./bndbox/xmax').text
             x2 = obj.find('./bndbox/xmax').text
