@@ -110,7 +110,7 @@ def build_xml_arch(parsed_xml, new_height, new_width, origin_height, origin_widt
                     if float(cy) < 0 or float(cy) > origin_height:
                         continue
 
-                except TypeError:
+                except TypeError as e:
                     continue
 
                 try:
@@ -122,7 +122,7 @@ def build_xml_arch(parsed_xml, new_height, new_width, origin_height, origin_widt
                     y1 = str(float(obj.find('./robndbox/y1').text) * resize_ratio - vertical_extra)
                     y2 = str(float(obj.find('./robndbox/y2').text) * resize_ratio - vertical_extra)
                     y3 = str(float(obj.find('./robndbox/y3').text) * resize_ratio - vertical_extra)
-                except AttributeError:
+                except AttributeError as e:
                     print("누락")
                     cx = float(cx)
                     cy = float(cy)
@@ -157,7 +157,7 @@ def build_xml_arch(parsed_xml, new_height, new_width, origin_height, origin_widt
                     height = str(float(obj.find('./robndbox/h').text) * resize_ratio)
                     angle = obj.find('./robndbox/angle').text
 
-                except TypeError:
+                except TypeError as e:
                     continue
 
                 try:
@@ -169,7 +169,7 @@ def build_xml_arch(parsed_xml, new_height, new_width, origin_height, origin_widt
                     y1 = str(float(obj.find('./robndbox/y1').text) * resize_ratio + vertical_padding)
                     y2 = str(float(obj.find('./robndbox/y2').text) * resize_ratio + vertical_padding)
                     y3 = str(float(obj.find('./robndbox/y3').text) * resize_ratio + vertical_padding)
-                except AttributeError:
+                except AttributeError as e:
                     print("누락")
                     cx = float(cx)
                     cy = float(cy)
@@ -245,8 +245,8 @@ def make_noise(resized_image, resized_width, resized_height, origin_height, orig
 
     horizontal_padding = int((origin_width - resized_width) / 2)
     vertical_padding = int((origin_height - resized_height) / 2)
-    noise_img[horizontal_padding:horizontal_padding + resized_width,
-              vertical_padding:vertical_padding + resized_height] = resized_image
+    noise_img[vertical_padding:vertical_padding + resized_height,
+              horizontal_padding:horizontal_padding + resized_width] = resized_image
     return noise_img
 
 
@@ -342,7 +342,7 @@ def walk_around_xml_files(resize_ratio, src_anno_dir_list, dst_anno_dir_list, sr
                     else:
                         new_xml_tree.write(dst_anno_file)  # resize 좌표가 있는 xml 파일 저장
 
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     print('ERROR : ', file)
                     err_file_cnt += 1
                     continue
@@ -352,9 +352,9 @@ def walk_around_xml_files(resize_ratio, src_anno_dir_list, dst_anno_dir_list, sr
 
 if __name__ == "__main__":
     # src_dir_folder = ['train', 'test', 'coa_origin']
-    src_dir_folder = ['train', 'test']
-    src_dir = './sample_xml/'
-    separated_dir = './output_xml/'
+    src_dir_folder = ['train']
+    src_dir = '/home/qisens/Desktop/new_area2/area2_200_test/rebuilt/'
+    separated_dir = '/home/qisens/Desktop/new_area2/area2_200_test/augmented_1.2/'
 
     # resize 를 하더라도 원본 크기는 유지하여 layer 에 입력되는 object 의 크기를 다르게 함
     # 640x640 보다 크게 확장되더라도 나머지부분은 자름

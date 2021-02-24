@@ -62,7 +62,7 @@ def build_xml_arch(parsed_xml, current_img_file):
     y2 = 0
     y3 = 0
 
-    height, width, channel = cv2.imread(current_img_file).shape
+    img_height, img_width, img_channel = cv2.imread(current_img_file).shape
 
     annotation = Element('annotation')
 
@@ -81,11 +81,11 @@ def build_xml_arch(parsed_xml, current_img_file):
 
     size = SubElement(annotation, 'size')
     width = SubElement(size, 'width')
-    width.text = str(width)
+    width.text = str(img_width)
     height = SubElement(size, 'height')
-    height.text = str(height)
+    height.text = str(img_height)
     depth = SubElement(size, 'depth')
-    depth.text = str(channel)
+    depth.text = str(img_channel)
 
     segmented = SubElement(annotation, 'segmented')
     segmented.text = '0'
@@ -109,7 +109,7 @@ def build_xml_arch(parsed_xml, current_img_file):
                 y2 = obj.find('./robndbox/y2').text
                 y3 = obj.find('./robndbox/y3').text
             except AttributeError:
-                print("누락")
+                print("Found bndbox")
                 cx = float(cx)
                 cy = float(cy)
                 w = float(width)
@@ -173,11 +173,11 @@ def build_xml_arch(parsed_xml, current_img_file):
             # robndbox 를 다루기 때문에 중심, 세로, 높이를 계산해야 하지만 bndbox 는 회전각이 0도 이기때문에 max min 값을 그대로 사용가능
             # 중심, 세로, 높이를 중요시 하는 경우 0을 계산해서 수정.
             label = obj.find('name').text
-            cx = 0
-            cy = 0
-            width = 0
-            height = 0
-            angle = 0
+            cx = str(0)
+            cy = str(0)
+            width = str(0)
+            height = str(0)
+            angle = str(0)
             x0 = obj.find('./bndbox/xmin').text
             x1 = obj.find('./bndbox/xmax').text
             x2 = obj.find('./bndbox/xmax').text
@@ -300,9 +300,9 @@ def walk_around_xml_files(src_anno_dir_list, dst_anno_dir_list, src_img_dir_list
 
 if __name__ == "__main__":
     # src_dir_folder = ['train', 'test', 'coa_origin']
-    src_dir_folder = ['rebuilt_coa_origin']
-    src_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/'
-    separated_dir = '/home/qisens/Desktop/r2cnn_dataset/goodroof_parkinglot_solarpanel_rooftop_facility_tight_heliport/rererebuilt_coa_origin/'
+    src_dir_folder = ['train', 'coa_origin']
+    src_dir = '/home/qisens/Desktop/new_area2/area2_200_test/before_rebuild/'
+    separated_dir = '/home/qisens/Desktop/new_area2/area2_200_test/rebuilt/'
 
     src_anno_dir_list, dst_anno_dir_list, src_img_dir_list, dst_img_dir_list = make_dir_list(src_dir_folder, src_dir,
                                                                                              separated_dir)
