@@ -27,6 +27,10 @@ EVAL_INTERVAL = 300 #60 seconds, for test
 # EVAL_INTERVAL = 60 #60 seconds, for test
 
 
+def calc_fscore(precision, recall, beta):
+    return (1+beta**2)*precision*recall / (beta**2*precision + recall)
+
+
 def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annotation_path):
 
     # 1. preprocess img
@@ -189,18 +193,25 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                 mAP_r, recall_r, precision_r, total_mAP_r, total_recall_r, total_precision_r = voc_eval_r.voc_evaluate_detections(all_boxes=all_boxes_r,
                                                                       test_imgid_list=real_test_imgname_list,
                                                                       test_annotation_path=test_annotation_path)
+                
+                f1score_h_check = (1+1**2)*precision_h*recall_h / (1**2*precision_h + recall_h)
+                f1score_h = calc_fscore(precision_h, recall_h, 1)                
+        
+                f1score_r_check = (1+1**2)*precision_r*recall_r / (1**2*precision_r + recall_r)
+                f1score_r = calc_fscore(precision_r, recall_r, 1)
+
                 print(10 * '##')
                 print('mAP_r:', mAP_r)
                 print('mRecall_r:', recall_r)
                 print('mPrecision_r:', precision_r)
-
                 print('total_mAP_r_list: ', total_mAP_r)
                 print('total_recall_r_list:', total_recall_r)
                 print('total_precision_r_list:', total_precision_r)
-
+                print('f1score_r:', f1score_r)
 
                 summary_path = os.path.join(cfgs.SUMMARY_PATH, cfgs.VERSION + '/eval_0')
-                #tools.mkdir(summary_path)
+                tools.mkdir(summary_path)
+                    
                 summary_writer = tf.summary.FileWriter(summary_path, graph=sess.graph)
 
                 mAP_h_summ = tf.Summary()
@@ -227,12 +238,22 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                 mPrecision_r_summ.value.add(tag='EVAL_Global/Precision_r', simple_value=precision_r)
                 summary_writer.add_summary(mPrecision_r_summ, global_stepnp)
 
+                mF1Score_h_summ = tf.Summary()
+                mF1Score_h_summ.value.add(tag='EVAL_Global/F1Score_h', simple_value=f1score_h)
+                summary_writer.add_summary(mF1Score_h_summ, global_stepnp)
+                
+                mF1Score_r_summ = tf.Summary()
+                mF1Score_r_summ.value.add(tag='EVAL_Global/F1Score_r', simple_value=f1score_r)
+                summary_writer.add_summary(mF1Score_r_summ, global_stepnp)
+
                 mAP_h_class_dict = {}
                 mAP_r_class_dict = {}
                 recall_h_class_dict = {}
                 recall_r_class_dict = {}
                 precision_h_class_dict = {}
                 precision_r_class_dict = {}
+                f1score_h_class_dict = {}
+                f1score_r_class_dict = {}
 
                 label_list = list(NAME_LABEL_MAP.keys())
                 label_list.remove('back_ground')
@@ -244,6 +265,8 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                     recall_r_class_dict["cls_%s_recall_r_summ" % cls] = tf.Summary()
                     precision_h_class_dict["cls_%s_precision_h_summ" % cls] = tf.Summary()
                     precision_r_class_dict["cls_%s_precision_r_summ" % cls] = tf.Summary()
+                    f1score_h_class_dict["cls_%s_f1score_h_summ" % cls] = tf.Summary()
+                    f1score_r_class_dict["cls_%s_f1score_r_summ" % cls] = tf.Summary()
 
                 for cls in label_list:
                     mAP_h_class_dict["cls_%s_mAP_h_summ" % cls].value.add(tag='EVAL_Class_mAP/{}_mAP_h'.format(cls),
@@ -258,6 +281,13 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                         tag='EVAL_Class_precision/{}_precision_h'.format(cls), simple_value=total_precision_h[cls])
                     precision_r_class_dict["cls_%s_precision_r_summ" % cls].value.add(
                         tag='EVAL_Class_precision/{}_precision_r'.format(cls), simple_value=total_precision_r[cls])
+                    
+                    f1score_h_cls = calc_fscore(total_precision_h[cls], total_recall_h[cls], 1)
+                    f1score_r_cls = calc_fscore(total_precision_r[cls], total_recall_r[cls], 1)
+                    f1score_h_class_dict["cls_%s_f1score_h_summ" % cls].value.add(
+                        tag='EVAL_Class_f1score/{}_f1score_h'.format(cls), simple_value=f1score_h_cls)
+                    f1score_r_class_dict["cls_%s_f1score_r_summ" % cls].value.add(
+                        tag='EVAL_Class_f1score/{}_f1score_r'.format(cls), simple_value=f1score_r_cls)
 
                 for cls in label_list:
                     summary_writer.add_summary(mAP_h_class_dict["cls_%s_mAP_h_summ" % cls], global_stepnp)
@@ -266,6 +296,8 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                     summary_writer.add_summary(recall_r_class_dict["cls_%s_recall_r_summ" % cls], global_stepnp)
                     summary_writer.add_summary(precision_h_class_dict["cls_%s_precision_h_summ" % cls], global_stepnp)
                     summary_writer.add_summary(precision_r_class_dict["cls_%s_precision_r_summ" % cls], global_stepnp)
+                    summary_writer.add_summary(f1score_h_class_dict["cls_%s_f1score_h_summ" % cls], global_stepnp)
+                    summary_writer.add_summary(f1score_r_class_dict["cls_%s_f1score_r_summ" % cls], global_stepnp)
 
                 summary_writer.flush()
 
