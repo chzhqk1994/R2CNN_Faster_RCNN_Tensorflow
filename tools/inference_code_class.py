@@ -48,7 +48,7 @@ class R2CNN:
         os.environ["CUDA_VISIBLE_DEVICES"] = self.gpu
 
         # 1. preprocess img
-        self.img_plac = tf.placeholder(dtype=tf.uint8, shape=[None, None, 3])
+        self.img_plac = tf.compat.v1.placeholder(dtype=tf.uint8, shape=[None, None, 3])
         self.img_batch = tf.cast(self.img_plac, tf.float32)
         self.img_batch = self.img_batch - tf.constant(cfgs.PIXEL_MEAN)
         self.img_batch = short_side_resize_for_inference_data(img_tensor=self.img_batch,
@@ -60,16 +60,16 @@ class R2CNN:
                                                                                           gtboxes_r_batch=None)
 
         self.init_op = tf.group(
-            tf.global_variables_initializer(),
-            tf.local_variables_initializer()
+            tf.compat.v1.global_variables_initializer(),
+            tf.compat.v1.local_variables_initializer()
         )
 
         self.restorer, self.restore_ckpt = self.det_net.get_restorer(model_path=self.model_path)
 
-        self.config = tf.ConfigProto()
+        self.config = tf.compat.v1.ConfigProto()
         self.config.gpu_options.allow_growth = True
 
-        self.sess = tf.Session(config=self.config)
+        self.sess = tf.compat.v1.Session(config=self.config)
         self.sess.run(self.init_op)
 
         self.restorer.restore(self.sess, self.restore_ckpt)

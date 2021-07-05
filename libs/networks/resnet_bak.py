@@ -25,13 +25,13 @@ def resnet_arg_scope(
         'is_training': False, 'decay': batch_norm_decay,
         'epsilon': batch_norm_epsilon, 'scale': batch_norm_scale,
         'trainable': False,
-        'updates_collections': tf.GraphKeys.UPDATE_OPS
+        'updates_collections': tf.compat.v1.GraphKeys.UPDATE_OPS
     }
 
     with slim.arg_scope(
             [slim.conv2d],
-            weights_regularizer=slim.l2_regularizer(weight_decay),
-            weights_initializer=slim.variance_scaling_initializer(),
+            weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay)),
+            weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=2.0),
             trainable=is_training,
             activation_fn=tf.nn.relu,
             normalizer_fn=slim.batch_norm,
@@ -88,7 +88,7 @@ def resnet_50_base(img_batch, is_training=True):
     ]
 
     with slim.arg_scope(resnet_arg_scope(is_training=False)):  # freeze the base conv_net
-        with tf.variable_scope('resnet_v1_50', 'resnet_v1_50'):
+        with tf.compat.v1.variable_scope('resnet_v1_50', 'resnet_v1_50'):
             net = resnet_utils.conv2d_same(
                 img_batch, 64, 7, stride=2, scope='conv1')
             net = slim.max_pool2d(
@@ -139,7 +139,7 @@ def resnet_101_base(img_batch, is_training):
                                  [(1024, 256, 2, 1)] + [(1024, 256, 1, 1)] * 22)
     ]
     with slim.arg_scope(resnet_arg_scope(is_training=False)):  # freeze the base conv_net
-        with tf.variable_scope('resnet_v1_101', 'resnet_v1_101'):
+        with tf.compat.v1.variable_scope('resnet_v1_101', 'resnet_v1_101'):
             net = resnet_utils.conv2d_same(
                 img_batch, 64, 7, stride=2, scope='conv1')
             net = slim.max_pool2d(
@@ -189,7 +189,7 @@ def build_feature_pyramid(feature_maps_dict):
     '''
 
     feature_pyramid = {}
-    with tf.variable_scope('build_feature_pyramid'):
+    with tf.compat.v1.variable_scope('build_feature_pyramid'):
         feature_pyramid['P4'] = slim.conv2d(feature_maps_dict['C4'],
                                             num_outputs=512,
                                             kernel_size=[1, 1],
@@ -202,9 +202,9 @@ def build_feature_pyramid(feature_maps_dict):
 
         for layer in range(3, 1, -1):
             p, c = feature_pyramid['P' + str(layer + 1)], feature_maps_dict['C' + str(layer)]
-            up_sample_shape = tf.shape(c)
-            up_sample = tf.image.resize_nearest_neighbor(p, [up_sample_shape[1], up_sample_shape[2]],
-                                                         name='build_P%d/up_sample_nearest_neighbor' % layer)
+            up_sample_shape = tf.shape(input=c)
+            up_sample = tf.image.resize(p, [up_sample_shape[1], up_sample_shape[2]],
+                                                         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR, name='build_P%d/up_sample_nearest_neighbor' % layer)
 
             c = slim.conv2d(c, num_outputs=512, kernel_size=[1, 1], stride=1,
                             scope='build_P%d/reduce_dimension' % layer)

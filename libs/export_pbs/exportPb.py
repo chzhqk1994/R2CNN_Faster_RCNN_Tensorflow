@@ -19,10 +19,10 @@ PB_NAME = 'FasterRCNN_Res101_Pascal.pb'
 
 def build_detection_graph():
     # 1. preprocess img
-    img_plac = tf.placeholder(dtype=tf.uint8, shape=[None, None, 3],
+    img_plac = tf.compat.v1.placeholder(dtype=tf.uint8, shape=[None, None, 3],
                               name='input_img')  # is RGB. not GBR
-    raw_shape = tf.shape(img_plac)
-    raw_h, raw_w = tf.to_float(raw_shape[0]), tf.to_float(raw_shape[1])
+    raw_shape = tf.shape(input=img_plac)
+    raw_h, raw_w = tf.cast(raw_shape[0], dtype=tf.float32), tf.cast(raw_shape[1], dtype=tf.float32)
 
     img_batch = tf.cast(img_plac, tf.float32)
     img_batch = short_side_resize_for_inference_data(img_tensor=img_batch,
@@ -42,8 +42,8 @@ def build_detection_graph():
     xmin, ymin, xmax, ymax = detected_boxes[:, 0], detected_boxes[:, 1], \
                              detected_boxes[:, 2], detected_boxes[:, 3]
 
-    resized_shape = tf.shape(img_batch)
-    resized_h, resized_w = tf.to_float(resized_shape[1]), tf.to_float(resized_shape[2])
+    resized_shape = tf.shape(input=img_batch)
+    resized_h, resized_w = tf.cast(resized_shape[1], dtype=tf.float32), tf.cast(resized_shape[2], dtype=tf.float32)
 
     xmin = xmin * raw_w / resized_w
     xmax = xmax * raw_w / resized_w
@@ -51,7 +51,7 @@ def build_detection_graph():
     ymin = ymin * raw_h / resized_h
     ymax = ymax * raw_h / resized_h
 
-    boxes = tf.transpose(tf.stack([xmin, ymin, xmax, ymax]))
+    boxes = tf.transpose(a=tf.stack([xmin, ymin, xmax, ymax]))
     dets = tf.concat([tf.reshape(detection_category, [-1, 1]),
                      tf.reshape(detection_scores, [-1, 1]),
                      boxes], axis=1, name='DetResults')
@@ -61,17 +61,17 @@ def build_detection_graph():
 
 def export_frozenPB():
 
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
 
     dets = build_detection_graph()
 
-    saver = tf.train.Saver()
+    saver = tf.compat.v1.train.Saver()
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         print("we have restred the weights from =====>>\n", CKPT_PATH)
         saver.restore(sess, CKPT_PATH)
 
-        tf.train.write_graph(sess.graph_def, OUT_DIR, PB_NAME)
+        tf.io.write_graph(sess.graph_def, OUT_DIR, PB_NAME)
         freeze_graph.freeze_graph(input_graph=os.path.join(OUT_DIR, PB_NAME),
                                   input_saver='',
                                   input_binary=False,

@@ -123,7 +123,7 @@ def decode_boxes(encode_boxes, reference_boxes, scale_factors=None):
     predict_ymin = predict_ycenter - predict_h / 2.
     predict_ymax = predict_ycenter + predict_h / 2.
 
-    return tf.transpose(tf.stack([predict_xmin, predict_ymin,
+    return tf.transpose(a=tf.stack([predict_xmin, predict_ymin,
                                   predict_xmax, predict_ymax]))
 
 
@@ -189,7 +189,7 @@ def decode_boxes_rotate(encode_boxes, reference_boxes, scale_factors=None):
     reference_y_center = (reference_ymin + reference_ymax) / 2.
     reference_w = reference_xmax - reference_xmin
     reference_h = reference_ymax - reference_ymin
-    reference_theta = tf.ones(tf.shape(reference_xmin)) * -90
+    reference_theta = tf.ones(tf.shape(input=reference_xmin)) * -90
     predict_x_center = t_xcenter * reference_w + reference_x_center
     predict_y_center = t_ycenter * reference_h + reference_y_center
     predict_w = tf.exp(t_w) * reference_w
@@ -242,7 +242,7 @@ def decode_boxes_rotate(encode_boxes, reference_boxes, scale_factors=None):
     # # [90, 180)
     # cond3 = tf.cast(tf.logical_and(mask5, mask6), tf.float32) * 180.
     # predict_theta -= cond3
-    decode_boxes = tf.transpose(tf.stack([predict_x_center, predict_y_center,
+    decode_boxes = tf.transpose(a=tf.stack([predict_x_center, predict_y_center,
                                           predict_w, predict_h, predict_theta]))
     return decode_boxes
 

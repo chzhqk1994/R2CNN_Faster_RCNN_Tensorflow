@@ -31,12 +31,12 @@ def nms_rotate(decode_boxes, scores, iou_threshold, max_output_size,
                               device_id=gpu_id)
 
         keep = tf.cond(
-            tf.greater(tf.shape(keep)[0], max_output_size),
+            pred=tf.greater(tf.shape(input=keep)[0], max_output_size),
             true_fn=lambda: tf.slice(keep, [0], [max_output_size]),
             false_fn=lambda: keep)
 
     else:
-        keep = tf.py_func(nms_rotate_cpu,
+        keep = tf.compat.v1.py_func(nms_rotate_cpu,
                           inp=[decode_boxes, scores, iou_threshold, max_output_size],
                           Tout=tf.int64)
     return keep
@@ -86,17 +86,17 @@ def nms_rotate_cpu(boxes, scores, iou_threshold, max_output_size):
 def nms_rotate_gpu(boxes_list, scores, iou_threshold, use_angle_condition=False, angle_gap_threshold=0, device_id=0):
     if use_angle_condition:
         x_c, y_c, w, h, theta = tf.unstack(boxes_list, axis=1)
-        boxes_list = tf.transpose(tf.stack([x_c, y_c, w, h, theta]))
+        boxes_list = tf.transpose(a=tf.stack([x_c, y_c, w, h, theta]))
         det_tensor = tf.concat([boxes_list, tf.expand_dims(scores, axis=1)], axis=1)
-        keep = tf.py_func(rotate_gpu_nms,
+        keep = tf.compat.v1.py_func(rotate_gpu_nms,
                           inp=[det_tensor, iou_threshold, device_id],
                           Tout=tf.int64)
         return keep
     else:
         x_c, y_c, w, h, theta = tf.unstack(boxes_list, axis=1)
-        boxes_list = tf.transpose(tf.stack([x_c, y_c, w, h, theta]))
+        boxes_list = tf.transpose(a=tf.stack([x_c, y_c, w, h, theta]))
         det_tensor = tf.concat([boxes_list, tf.expand_dims(scores, axis=1)], axis=1)
-        keep = tf.py_func(rotate_gpu_nms,
+        keep = tf.compat.v1.py_func(rotate_gpu_nms,
                           inp=[det_tensor, iou_threshold, device_id],
                           Tout=tf.int64)
         keep = tf.reshape(keep, [-1])
@@ -111,10 +111,10 @@ if __name__ == '__main__':
 
     scores = np.array([0.99, 0.88, 0.66, 0.77])
 
-    keep = nms_rotate(tf.convert_to_tensor(boxes, dtype=tf.float32), tf.convert_to_tensor(scores, dtype=tf.float32),
+    keep = nms_rotate(tf.convert_to_tensor(value=boxes, dtype=tf.float32), tf.convert_to_tensor(value=scores, dtype=tf.float32),
                       0.7, 5)
 
     import os
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         print(sess.run(keep))

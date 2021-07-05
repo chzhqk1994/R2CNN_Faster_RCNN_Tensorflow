@@ -11,14 +11,14 @@ from libs.label_name_dict.label_dict import *
 from help_utils.tools import *
 
 
-tf.app.flags.DEFINE_string('VOC_dir', '/root/userfolder/yx/', 'Voc dir')
-tf.app.flags.DEFINE_string('xml_dir', 'icdar2015_xml', 'xml dir')
-tf.app.flags.DEFINE_string('image_dir', 'icdar2015_img', 'image dir')
-tf.app.flags.DEFINE_string('save_name', 'train', 'save name')
-tf.app.flags.DEFINE_string('save_dir', '../tfrecord/', 'save name')
-tf.app.flags.DEFINE_string('img_format', '.jpg', 'format of image')
-tf.app.flags.DEFINE_string('dataset', 'ICDAR2015', 'dataset')
-FLAGS = tf.app.flags.FLAGS
+tf.compat.v1.flags.DEFINE_string('VOC_dir', '/root/userfolder/yx/', 'Voc dir')
+tf.compat.v1.flags.DEFINE_string('xml_dir', 'icdar2015_xml', 'xml dir')
+tf.compat.v1.flags.DEFINE_string('image_dir', 'icdar2015_img', 'image dir')
+tf.compat.v1.flags.DEFINE_string('save_name', 'train', 'save name')
+tf.compat.v1.flags.DEFINE_string('save_dir', '../tfrecord/', 'save name')
+tf.compat.v1.flags.DEFINE_string('img_format', '.jpg', 'format of image')
+tf.compat.v1.flags.DEFINE_string('dataset', 'ICDAR2015', 'dataset')
+FLAGS = tf.compat.v1.flags.FLAGS
 
 
 def _int64_feature(value):
@@ -70,7 +70,7 @@ def read_xml_gtbox_and_label(xml_path):
                         if node.tag == 'xmax': tmp_box[4] = int(round(float(node.text))) 
                         if node.tag == 'ymax': tmp_box[5] = int(round(float(node.text))) 
                         if node.tag == 'ymax': tmp_box[7] = int(round(float(node.text))) 
-                    print(label)
+                    #print(label)
                     assert label is not None, 'label is none, error'
                     tmp_box[8] = label
                     box_list.append(tmp_box)
@@ -97,9 +97,9 @@ def read_xml_gtbox_and_label(xml_path):
     if len(box_list) == 0:
         print("NULL {}", xml_path)
 
-    print(box_list)
+    #print(box_list)
     gtbox_label = np.array(box_list, dtype=np.int32)
-    print(gtbox_label)
+    #print(gtbox_label)
     return img_height, img_width, gtbox_label
 
 def convert_pascal_to_tfrecord():
@@ -113,9 +113,9 @@ def convert_pascal_to_tfrecord():
 
     # writer_options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.ZLIB)
     # writer = tf.python_io.TFRecordWriter(path=save_path, options=writer_options)
-    writer = tf.python_io.TFRecordWriter(path=save_path)
+    writer = tf.io.TFRecordWriter(path=save_path)
     for count, xml in enumerate(glob.glob(xml_path + '/*.xml')):
-        print(xml)
+        #print(xml)
         # to avoid path error in different development platform
         xml = xml.replace('\\', '/')
 
@@ -125,7 +125,7 @@ def convert_pascal_to_tfrecord():
         img_name = img_name_temp2 + FLAGS.img_format
        
         img_path = image_path + '/' + img_name
-        print(img_path)
+        #print(img_path)
 
         if not os.path.exists(xml_path):
             #print(xml_path)

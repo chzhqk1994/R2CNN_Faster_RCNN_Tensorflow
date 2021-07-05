@@ -51,7 +51,7 @@ def inception_arg_scope(weight_decay=0.00004,
       # epsilon to prevent 0s in variance.
       'epsilon': batch_norm_epsilon,
       # collection containing update_ops.
-      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+      'updates_collections': tf.compat.v1.GraphKeys.UPDATE_OPS,
   }
   if use_batch_norm:
     normalizer_fn = slim.batch_norm
@@ -61,10 +61,10 @@ def inception_arg_scope(weight_decay=0.00004,
     normalizer_params = {}
   # Set weight_decay for weights in Conv and FC layers.
   with slim.arg_scope([slim.conv2d, slim.fully_connected],
-                      weights_regularizer=slim.l2_regularizer(weight_decay)):
+                      weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay))):
     with slim.arg_scope(
         [slim.conv2d],
-        weights_initializer=slim.variance_scaling_initializer(),
+        weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=2.0),
         activation_fn=tf.nn.relu,
         normalizer_fn=normalizer_fn,
         normalizer_params=normalizer_params) as sc:

@@ -48,7 +48,7 @@ def postprocess_rpn_proposals(rpn_bbox_pred, rpn_cls_prob, img_shape, anchors, i
 
     # 3. get top N to NMS
     if pre_nms_topN > 0:
-        pre_nms_topN = tf.minimum(pre_nms_topN, tf.shape(decode_boxes)[0], name='avoid_unenough_boxes')
+        pre_nms_topN = tf.minimum(pre_nms_topN, tf.shape(input=decode_boxes)[0], name='avoid_unenough_boxes')
         cls_prob, top_k_indices = tf.nn.top_k(cls_prob, k=pre_nms_topN)
         decode_boxes = tf.gather(decode_boxes, top_k_indices)
 

@@ -56,7 +56,7 @@ def inference(det_net, file_paths, des_folder, h_len, w_len, h_overlap, w_overla
             'please set score threshold (example: SHOW_SCORE_THRSHOLD = 0.00) in cfgs.py'
 
     # 1. preprocess img
-    img_plac = tf.placeholder(dtype=tf.uint8, shape=[None, None, 3])
+    img_plac = tf.compat.v1.placeholder(dtype=tf.uint8, shape=[None, None, 3])
     img_batch = tf.cast(img_plac, tf.float32)
     img_batch = img_batch - tf.constant(cfgs.PIXEL_MEAN)
     img_batch = short_side_resize_for_inference_data(img_tensor=img_batch,
@@ -69,16 +69,16 @@ def inference(det_net, file_paths, des_folder, h_len, w_len, h_overlap, w_overla
                                                                                       gtboxes_r_batch=None)
 
     init_op = tf.group(
-        tf.global_variables_initializer(),
-        tf.local_variables_initializer()
+        tf.compat.v1.global_variables_initializer(),
+        tf.compat.v1.local_variables_initializer()
     )
 
     restorer, restore_ckpt = det_net.get_restorer()
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
 
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sess.run(init_op)
         if not restorer is None:
             restorer.restore(sess, restore_ckpt)

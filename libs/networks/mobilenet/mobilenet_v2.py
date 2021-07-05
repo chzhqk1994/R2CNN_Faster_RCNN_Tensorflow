@@ -27,11 +27,11 @@ from __future__ import print_function
 import copy
 
 import tensorflow as tf
-
+import tf_slim as slim
 from libs.networks.mobilenet import conv_blocks as ops
 from libs.networks.mobilenet import mobilenet as lib
 
-slim = tf.contrib.slim
+#slim = tf.contrib.slim
 op = lib.op
 
 expand_input = ops.expand_input_by_factor

@@ -1,6 +1,6 @@
 
 #!/bin/sh
-export DATASET_ROOT='/media/qisens/4tb3/kowa_global/r2cnn_dataset/flatroof_solarpanel_parkinglot/'
+export DATASET_ROOT='/home/qisens-18045/work/dataset/'
 export DATASET_NAME='ROOF'
 export IMAGES='train/JPEGImages/'
 export LABELS='train/annotations/'

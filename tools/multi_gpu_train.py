@@ -22,11 +22,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = cfgs.GPU_GROUP
 
 
 def tower_loss(scope):
-    with tf.name_scope(scope):
+    with tf.compat.v1.name_scope(scope):
         faster_rcnn = build_whole_network.DetectionNetwork(base_network_name=cfgs.NET_NAME,
                                                            is_training=True)
 
-        with tf.name_scope('get_batch'):
+        with tf.compat.v1.name_scope('get_batch'):
             img_name_batch, img_batch, gtboxes_and_label_batch, num_objects_batch = \
                 next_batch(dataset_name=cfgs.DATASET_NAME,  # 'pascal', 'coco'
                            batch_size=cfgs.BATCH_SIZE,
@@ -34,15 +34,15 @@ def tower_loss(scope):
                            is_training=True)
             gtboxes_and_label = tf.reshape(gtboxes_and_label_batch, [-1, 5])
 
-        biases_regularizer = tf.no_regularizer
-        weights_regularizer = tf.contrib.layers.l2_regularizer(cfgs.WEIGHT_DECAY)
+        biases_regularizer = tf.compat.v1.no_regularizer
+        weights_regularizer = tf.keras.regularizers.l2(0.5 * (cfgs.WEIGHT_DECAY))
 
         # list as many types of layers as possible, even if they are not used now
         with slim.arg_scope([slim.conv2d, slim.conv2d_in_plane,
                              slim.conv2d_transpose, slim.separable_conv2d, slim.fully_connected],
                             weights_regularizer=weights_regularizer,
                             biases_regularizer=biases_regularizer,
-                            biases_initializer=tf.constant_initializer(0.0)):
+                            biases_initializer=tf.compat.v1.constant_initializer(0.0)):
             final_bbox, final_scores, final_category, loss_dict = faster_rcnn.build_whole_detection_network(
                 input_img_batch=img_batch,
                 gtboxes_batch=gtboxes_and_label)
@@ -61,16 +61,16 @@ def tower_loss(scope):
         # ____________________________________________________________________________________________________build loss
 
         # ---------------------------------------------------------------------------------------------------add summary
-        tf.summary.scalar('RPN_LOSS/cls_loss', rpn_cls_loss)
-        tf.summary.scalar('RPN_LOSS/location_loss', rpn_location_loss)
-        tf.summary.scalar('RPN_LOSS/rpn_total_loss', rpn_total_loss)
+        tf.compat.v1.summary.scalar('RPN_LOSS/cls_loss', rpn_cls_loss)
+        tf.compat.v1.summary.scalar('RPN_LOSS/location_loss', rpn_location_loss)
+        tf.compat.v1.summary.scalar('RPN_LOSS/rpn_total_loss', rpn_total_loss)
 
-        tf.summary.scalar('FAST_LOSS/fastrcnn_cls_loss', fastrcnn_cls_loss)
-        tf.summary.scalar('FAST_LOSS/fastrcnn_location_loss', fastrcnn_loc_loss)
-        tf.summary.scalar('FAST_LOSS/fastrcnn_total_loss', fastrcnn_total_loss)
+        tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_cls_loss', fastrcnn_cls_loss)
+        tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_location_loss', fastrcnn_loc_loss)
+        tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_total_loss', fastrcnn_total_loss)
 
-        tf.summary.scalar('LOSS/total_loss', total_loss)
-        tf.summary.scalar('LOSS/regular_weights', weight_decay_loss)
+        tf.compat.v1.summary.scalar('LOSS/total_loss', total_loss)
+        tf.compat.v1.summary.scalar('LOSS/regular_weights', weight_decay_loss)
 
         gtboxes_in_img = show_box_in_tensor.draw_boxes_with_categories(img_batch=img_batch,
                                                                        boxes=gtboxes_and_label[:, :-1],
@@ -80,8 +80,8 @@ def tower_loss(scope):
                                                                                          boxes=final_bbox,
                                                                                          labels=final_category,
                                                                                          scores=final_scores)
-            tf.summary.image('Compare/final_detection', detections_in_img)
-        tf.summary.image('Compare/gtboxes', gtboxes_in_img)
+            tf.compat.v1.summary.image('Compare/final_detection', detections_in_img)
+        tf.compat.v1.summary.image('Compare/gtboxes', gtboxes_in_img)
 
         return total_loss, faster_rcnn, img_name_batch, rpn_location_loss, rpn_cls_loss, rpn_total_loss,\
                fastrcnn_loc_loss, fastrcnn_cls_loss, fastrcnn_total_loss
@@ -96,7 +96,7 @@ def average_gradients(tower_grads):
             grads.append(expended_g)
 
         grad = tf.concat(grads, 0)
-        grad = tf.reduce_mean(grad, 0)
+        grad = tf.reduce_mean(input_tensor=grad, axis=0)
         v = grad_and_vars[0][1]
         grad_and_var = (grad, v)
         average_grads.append(grad_and_var)
@@ -110,11 +110,11 @@ def train():
     # ___________________________________________________________________________________________________add summary
 
     global_step = slim.get_or_create_global_step()
-    lr = tf.train.piecewise_constant(global_step,
+    lr = tf.compat.v1.train.piecewise_constant(global_step,
                                      boundaries=[np.int64(cfgs.DECAY_STEP[0]), np.int64(cfgs.DECAY_STEP[1])],
                                      values=[cfgs.LR, cfgs.LR / 10., cfgs.LR / 100.])
-    tf.summary.scalar('lr', lr)
-    optimizer = tf.train.MomentumOptimizer(lr, momentum=cfgs.MOMENTUM)
+    tf.compat.v1.summary.scalar('lr', lr)
+    optimizer = tf.compat.v1.train.MomentumOptimizer(lr, momentum=cfgs.MOMENTUM)
 
     # ---------------------------------------------------------------------------------------------compute gradients
     # gradients = faster_rcnn.get_gradients(optimizer, total_loss)
@@ -138,45 +138,45 @@ def train():
     tower_grads = []
     for i in range(len(cfgs.GPU_GROUP)):
         with tf.device('/gpu:%d' % i):
-            with tf.name_scope('GGpu%d' % i) as scope:
+            with tf.compat.v1.name_scope('GGpu%d' % i) as scope:
                 loss, faster_rcnn, img_name_batch, rpn_location_loss, rpn_cls_loss, rpn_total_loss,\
                 fastrcnn_loc_loss, fastrcnn_cls_loss, fastrcnn_total_loss = tower_loss(scope)
-                tf.get_variable_scope().reuse_variables()
+                tf.compat.v1.get_variable_scope().reuse_variables()
                 grads = optimizer.compute_gradients(loss)
 
                 if cfgs.MUTILPY_BIAS_GRADIENT:
                     grads = faster_rcnn.enlarge_gradients_for_bias(grads)
 
                 if cfgs.GRADIENT_CLIPPING_BY_NORM:
-                    with tf.name_scope('clip_gradients_YJR'):
+                    with tf.compat.v1.name_scope('clip_gradients_YJR'):
                         grads = slim.learning.clip_gradient_norms(grads, cfgs.GRADIENT_CLIPPING_BY_NORM)
                 tower_grads.append(grads)
     grads = average_gradients(tower_grads)
     train_op = optimizer.apply_gradients(grads, global_step)
 
-    summary_op = tf.summary.merge_all()
+    summary_op = tf.compat.v1.summary.merge_all()
     init_op = tf.group(
-        tf.global_variables_initializer(),
-        tf.local_variables_initializer()
+        tf.compat.v1.global_variables_initializer(),
+        tf.compat.v1.local_variables_initializer()
     )
 
     restorer, restore_ckpt = faster_rcnn.get_restorer()
-    saver = tf.train.Saver(max_to_keep=10)
+    saver = tf.compat.v1.train.Saver(max_to_keep=10)
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
 
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sess.run(init_op)
         if not restorer is None:
             restorer.restore(sess, restore_ckpt)
             print('restore model')
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess, coord)
+        threads = tf.compat.v1.train.start_queue_runners(sess, coord)
 
         summary_path = os.path.join(cfgs.SUMMARY_PATH, cfgs.VERSION)
         tools.mkdir(summary_path)
-        summary_writer = tf.summary.FileWriter(summary_path, graph=sess.graph)
+        summary_writer = tf.compat.v1.summary.FileWriter(summary_path, graph=sess.graph)
 
         for step in range(cfgs.MAX_ITERATION):
             training_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))

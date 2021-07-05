@@ -36,7 +36,7 @@ class NetworksTest(tf.test.TestCase):
         net_fn = nets_factory.get_network_fn(net, num_classes)
         # Most networks use 224 as their default_image_size
         image_size = getattr(net_fn, 'default_image_size', 224)
-        inputs = tf.random_uniform((batch_size, image_size, image_size, 3))
+        inputs = tf.random.uniform((batch_size, image_size, image_size, 3))
         logits, end_points = net_fn(inputs)
         self.assertTrue(isinstance(logits, tf.Tensor))
         self.assertTrue(isinstance(end_points, dict))
@@ -52,9 +52,9 @@ class NetworksTest(tf.test.TestCase):
       image_size = getattr(net_fn, 'default_image_size', 224)
       with slim.arg_scope([slim.model_variable, slim.variable],
                           device='/CPU:0'):
-        inputs = tf.random_uniform((batch_size, image_size, image_size, 3))
+        inputs = tf.random.uniform((batch_size, image_size, image_size, 3))
         net_fn(inputs)
-      weights = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, 'CifarNet/conv1')[0]
+      weights = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, 'CifarNet/conv1')[0]
       self.assertDeviceEqual('/CPU:0', weights.device)
 
 if __name__ == '__main__':

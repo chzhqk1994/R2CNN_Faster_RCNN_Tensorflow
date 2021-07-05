@@ -101,7 +101,7 @@ def make_anchors(base_anchor_size, anchor_scales, anchor_ratios,
     :param stride:
     :return:
     '''
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
         base_anchor = tf.constant([0, 0, base_anchor_size, base_anchor_size], tf.float32)  # [x_center, y_center, w, h]
 
         ws, hs = enum_ratios(enum_scales(base_anchor, anchor_scales),

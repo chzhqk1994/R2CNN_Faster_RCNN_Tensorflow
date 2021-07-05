@@ -5,8 +5,8 @@ import shutil
 
 
 src_dir_folder = ['train', 'test']
-src_dir = 'C:/Users/chzhq/Desktop/checked_image/tag_separate/have_bndbox/flat_slope/'
-separated_dir = 'C:/Users/chzhq/Desktop/checked_image/tag_separate/have_bndbox/flat-slope/'
+src_dir = '/home/qisens-18045/work/dataset/'
+separated_dir = '/home/qisens-18045/work/dataset_renamed/'
 
 src_anno_dir_list = []
 dst_anno_dir_list = []
@@ -46,12 +46,16 @@ for src_dir in src_anno_dir_list:
 
                 for object in xml_tree.iter("object"):
                     # label = object.find('name').text
-                    if object.find('name').text == 'solarpanel_flat':
-                        object.find('name').text = 'solarpanel-flat'
+                    if object.find('name').text == 'solarpanel-flat':
+                        object.find('name').text = 'solarpanel_flat'
                         label = object.find('name').text
 
-                    if object.find('name').text == 'solarpanel_slope':
-                        object.find('name').text = 'solarpanel-slope'
+                    if object.find('name').text == 'solarpanel-slope':
+                        object.find('name').text = 'solarpanel_slope'
+                        label = object.find('name').text
+
+                    if object.find('name').text == 'goodroof':
+                        object.find('name').text = 'flatroof'
                         label = object.find('name').text
 
                 new_tree = xml_tree

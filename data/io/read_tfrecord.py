@@ -16,28 +16,28 @@ def read_single_example_and_decode(filename_queue):
     # tfrecord_options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.ZLIB)
 
     # reader = tf.TFRecordReader(options=tfrecord_options)
-    reader = tf.TFRecordReader()
+    reader = tf.compat.v1.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
 
-    features = tf.parse_single_example(
+    features = tf.io.parse_single_example(
         serialized=serialized_example,
         features={
-            'img_name': tf.FixedLenFeature([], tf.string),
-            'img_height': tf.FixedLenFeature([], tf.int64),
-            'img_width': tf.FixedLenFeature([], tf.int64),
-            'img': tf.FixedLenFeature([], tf.string),
-            'gtboxes_and_label': tf.FixedLenFeature([], tf.string),
-            'num_objects': tf.FixedLenFeature([], tf.int64)
+            'img_name': tf.io.FixedLenFeature([], tf.string),
+            'img_height': tf.io.FixedLenFeature([], tf.int64),
+            'img_width': tf.io.FixedLenFeature([], tf.int64),
+            'img': tf.io.FixedLenFeature([], tf.string),
+            'gtboxes_and_label': tf.io.FixedLenFeature([], tf.string),
+            'num_objects': tf.io.FixedLenFeature([], tf.int64)
         }
     )
     img_name = features['img_name']
     img_height = tf.cast(features['img_height'], tf.int32)
     img_width = tf.cast(features['img_width'], tf.int32)
-    img = tf.decode_raw(features['img'], tf.uint8)
+    img = tf.io.decode_raw(features['img'], tf.uint8)
 
     img = tf.reshape(img, shape=[img_height, img_width, 3])
 
-    gtboxes_and_label = tf.decode_raw(features['gtboxes_and_label'], tf.int32)
+    gtboxes_and_label = tf.io.decode_raw(features['gtboxes_and_label'], tf.int32)
     gtboxes_and_label = tf.reshape(gtboxes_and_label, [-1, 9])
 
     num_objects = tf.cast(features['num_objects'], tf.int32)
@@ -82,14 +82,15 @@ def next_batch(dataset_name, batch_size, shortside_len, is_training):
 
     print('tfrecord path is -->', os.path.abspath(pattern))
 
-    filename_tensorlist = tf.train.match_filenames_once(pattern)
+    filename_tensorlist = tf.io.match_filenames_once(pattern)
 
-    filename_queue = tf.train.string_input_producer(filename_tensorlist)
+    # filename_queue = tf.compat.v1.train.string_input_producer(filename_tensorlist)
+    filename_queue = tf.data.Dataset.list_files(filename_tensorlist)
 
     img_name, img, gtboxes_and_label, num_obs = read_and_prepocess_single_img(filename_queue, shortside_len,
                                                                               is_training=is_training)
     img_name_batch, img_batch, gtboxes_and_label_batch, num_obs_batch = \
-        tf.train.batch(
+        tf.compat.v1.train.batch(
                        [img_name, img, gtboxes_and_label, num_obs],
                        batch_size=batch_size,
                        capacity=1,
@@ -108,18 +109,18 @@ if __name__ == '__main__':
     gtboxes_and_label = tf.reshape(gtboxes_and_label_batch, [-1, 9])
 
     init_op = tf.group(
-        tf.global_variables_initializer(),
-        tf.local_variables_initializer()
+        tf.compat.v1.global_variables_initializer(),
+        tf.compat.v1.local_variables_initializer()
     )
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
 
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sess.run(init_op)
 
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess, coord)
+        threads = tf.compat.v1.train.start_queue_runners(sess, coord)
 
         img_name_batch_, img_batch_, gtboxes_and_label_batch_, num_objects_batch_ \
             = sess.run([img_name_batch, img_batch, gtboxes_and_label_batch, num_objects_batch])

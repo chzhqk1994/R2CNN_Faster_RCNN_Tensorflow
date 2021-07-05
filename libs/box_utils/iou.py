@@ -15,7 +15,7 @@ def iou_calculate(boxes_1, boxes_2):
     :param boxes_2: [M, 4] [ymin, xmin. ymax, xmax]
     :return:
     '''
-    with tf.name_scope('iou_caculate'):
+    with tf.compat.v1.name_scope('iou_caculate'):
 
         ymin_1, xmin_1, ymax_1, xmax_1 = tf.split(boxes_1, 4, axis=1)  # ymin_1 shape is [N, 1]..
 

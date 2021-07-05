@@ -13,7 +13,7 @@ ADD_BOX_IN_TENSORBOARD = True
 ROOT_PATH = os.path.abspath('../')
 print(20*"++--")
 print(ROOT_PATH)
-GPU_GROUP = "0"
+GPU_GROUP = "1"
 SHOW_TRAIN_INFO_INTE = 10
 SMRY_ITER = 100
 SAVE_WEIGHTS_INTE = 2000
@@ -71,8 +71,8 @@ CLASS_NUM = 5
 
 # --------------------------------------------- Network_config
 BATCH_SIZE = 1
-INITIALIZER = tf.random_normal_initializer(mean=0.0, stddev=0.01)
-BBOX_INITIALIZER = tf.random_normal_initializer(mean=0.0, stddev=0.001)
+INITIALIZER = tf.compat.v1.random_normal_initializer(mean=0.0, stddev=0.01)
+BBOX_INITIALIZER = tf.compat.v1.random_normal_initializer(mean=0.0, stddev=0.001)
 WEIGHT_DECAY = 0.0001
 
 

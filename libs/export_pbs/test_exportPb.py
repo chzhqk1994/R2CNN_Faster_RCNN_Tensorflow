@@ -25,8 +25,8 @@ from help_utils import tools
 def load_graph(frozen_graph_file):
 
     # we parse the graph_def file
-    with tf.gfile.GFile(frozen_graph_file, 'rb') as f:
-        graph_def = tf.GraphDef()
+    with tf.io.gfile.GFile(frozen_graph_file, 'rb') as f:
+        graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
 
     # we load the graph_def in the default graph
@@ -49,7 +49,7 @@ def test(frozen_graph_path, test_dir):
     img = graph.get_tensor_by_name("input_img:0")
     dets = graph.get_tensor_by_name("DetResults:0")
 
-    with tf.Session(graph=graph) as sess:
+    with tf.compat.v1.Session(graph=graph) as sess:
         for img_path in os.listdir(test_dir):
             a_img = cv2.imread(os.path.join(test_dir, img_path))[:, :, ::-1]
             st = time.time()

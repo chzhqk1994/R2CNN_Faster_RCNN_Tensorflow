@@ -34,7 +34,7 @@ def calc_fscore(precision, recall, beta):
 def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annotation_path):
 
     # 1. preprocess img
-    img_plac = tf.placeholder(dtype=tf.uint8, shape=[None, None, 3])  # is RGB. not GBR
+    img_plac = tf.compat.v1.placeholder(dtype=tf.uint8, shape=[None, None, 3])  # is RGB. not GBR
     img_batch = tf.cast(img_plac, tf.float32)
     img_batch = img_batch - tf.constant(cfgs.PIXEL_MEAN)
     img_batch = short_side_resize_for_inference_data(img_tensor=img_batch,
@@ -47,8 +47,8 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
         gtboxes_h_batch=None, gtboxes_r_batch=None)
 
     init_op = tf.group(
-        tf.global_variables_initializer(),
-        tf.local_variables_initializer()
+        tf.compat.v1.global_variables_initializer(),
+        tf.compat.v1.local_variables_initializer()
     )
 
     global_step_tensor = slim.get_or_create_global_step()
@@ -72,17 +72,17 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
             print('Last ckpt was {}, new ckpt is {}'.format(last_checkpoint_name, model_path))
             last_checkpoint_name = model_path
 
-            config = tf.ConfigProto()
+            config = tf.compat.v1.ConfigProto()
             config.gpu_options.allow_growth = True
 
-            with tf.Session(config=config) as sess:
+            with tf.compat.v1.Session(config=config) as sess:
                 sess.run(init_op)
                 sess.run(global_step_tensor.initializer)
                 if not restorer is None:
                     restorer.restore(sess, restore_ckpt)
                     print('restore model', restore_ckpt)
 
-                global_stepnp = tf.train.global_step(sess, global_step_tensor)
+                global_stepnp = tf.compat.v1.train.global_step(sess, global_step_tensor)
                 print('#########################', global_stepnp)
 
                 all_boxes_h = []
@@ -212,37 +212,37 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                 summary_path = os.path.join(cfgs.SUMMARY_PATH, cfgs.VERSION + '/eval_0')
                 tools.mkdir(summary_path)
                     
-                summary_writer = tf.summary.FileWriter(summary_path, graph=sess.graph)
+                summary_writer = tf.compat.v1.summary.FileWriter(summary_path, graph=sess.graph)
 
-                mAP_h_summ = tf.Summary()
+                mAP_h_summ = tf.compat.v1.Summary()
                 mAP_h_summ.value.add(tag='EVAL_Global/mAP_h', simple_value=mAP_h)
                 summary_writer.add_summary(mAP_h_summ, global_stepnp)
 
-                mAP_r_summ = tf.Summary()
+                mAP_r_summ = tf.compat.v1.Summary()
                 mAP_r_summ.value.add(tag='EVAL_Global/mAP_r', simple_value=mAP_r)
                 summary_writer.add_summary(mAP_r_summ, global_stepnp)
 
-                mRecall_h_summ = tf.Summary()
+                mRecall_h_summ = tf.compat.v1.Summary()
                 mRecall_h_summ.value.add(tag='EVAL_Global/Recall_h', simple_value=recall_h)
                 summary_writer.add_summary(mRecall_h_summ, global_stepnp)
 
-                mRecall_r_summ = tf.Summary()
+                mRecall_r_summ = tf.compat.v1.Summary()
                 mRecall_r_summ.value.add(tag='EVAL_Global/Recall_r', simple_value=recall_r)
                 summary_writer.add_summary(mRecall_r_summ, global_stepnp)
 
-                mPrecision_h_summ = tf.Summary()
+                mPrecision_h_summ = tf.compat.v1.Summary()
                 mPrecision_h_summ.value.add(tag='EVAL_Global/Precision_h', simple_value=precision_h)
                 summary_writer.add_summary(mPrecision_h_summ, global_stepnp)
 
-                mPrecision_r_summ = tf.Summary()
+                mPrecision_r_summ = tf.compat.v1.Summary()
                 mPrecision_r_summ.value.add(tag='EVAL_Global/Precision_r', simple_value=precision_r)
                 summary_writer.add_summary(mPrecision_r_summ, global_stepnp)
 
-                mF1Score_h_summ = tf.Summary()
+                mF1Score_h_summ = tf.compat.v1.Summary()
                 mF1Score_h_summ.value.add(tag='EVAL_Global/F1Score_h', simple_value=f1score_h)
                 summary_writer.add_summary(mF1Score_h_summ, global_stepnp)
                 
-                mF1Score_r_summ = tf.Summary()
+                mF1Score_r_summ = tf.compat.v1.Summary()
                 mF1Score_r_summ.value.add(tag='EVAL_Global/F1Score_r', simple_value=f1score_r)
                 summary_writer.add_summary(mF1Score_r_summ, global_stepnp)
 
@@ -259,14 +259,14 @@ def eval_with_plac(img_dir, det_net, num_imgs, image_ext, draw_imgs, test_annota
                 label_list.remove('back_ground')
 
                 for cls in label_list:
-                    mAP_h_class_dict["cls_%s_mAP_h_summ" % cls] = tf.Summary()
-                    mAP_r_class_dict["cls_%s_mAP_r_summ" % cls] = tf.Summary()
-                    recall_h_class_dict["cls_%s_recall_h_summ" % cls] = tf.Summary()
-                    recall_r_class_dict["cls_%s_recall_r_summ" % cls] = tf.Summary()
-                    precision_h_class_dict["cls_%s_precision_h_summ" % cls] = tf.Summary()
-                    precision_r_class_dict["cls_%s_precision_r_summ" % cls] = tf.Summary()
-                    f1score_h_class_dict["cls_%s_f1score_h_summ" % cls] = tf.Summary()
-                    f1score_r_class_dict["cls_%s_f1score_r_summ" % cls] = tf.Summary()
+                    mAP_h_class_dict["cls_%s_mAP_h_summ" % cls] = tf.compat.v1.Summary()
+                    mAP_r_class_dict["cls_%s_mAP_r_summ" % cls] = tf.compat.v1.Summary()
+                    recall_h_class_dict["cls_%s_recall_h_summ" % cls] = tf.compat.v1.Summary()
+                    recall_r_class_dict["cls_%s_recall_r_summ" % cls] = tf.compat.v1.Summary()
+                    precision_h_class_dict["cls_%s_precision_h_summ" % cls] = tf.compat.v1.Summary()
+                    precision_r_class_dict["cls_%s_precision_r_summ" % cls] = tf.compat.v1.Summary()
+                    f1score_h_class_dict["cls_%s_f1score_h_summ" % cls] = tf.compat.v1.Summary()
+                    f1score_r_class_dict["cls_%s_f1score_r_summ" % cls] = tf.compat.v1.Summary()
 
                 for cls in label_list:
                     mAP_h_class_dict["cls_%s_mAP_h_summ" % cls].value.add(tag='EVAL_Class_mAP/{}_mAP_h'.format(cls),

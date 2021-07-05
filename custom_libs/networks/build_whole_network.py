@@ -51,7 +51,7 @@ class DetectionNetwork(object):
         :return:
         '''
 
-        with tf.name_scope('postprocess_fastrcnn_h'):
+        with tf.compat.v1.name_scope('postprocess_fastrcnn_h'):
             rois = tf.stop_gradient(rois)
             scores = tf.stop_gradient(scores)
             bbox_ppred = tf.reshape(bbox_ppred, [-1, cfgs.CLASS_NUM + 1, 4])
@@ -101,7 +101,7 @@ class DetectionNetwork(object):
             '''
             in training. We should show the detecitons in the tensorboard. So we add this.
             '''
-            kept_indices = tf.reshape(tf.where(tf.greater_equal(final_scores, cfgs.SHOW_SCORE_THRSHOLD)), [-1])
+            kept_indices = tf.reshape(tf.compat.v1.where(tf.greater_equal(final_scores, cfgs.SHOW_SCORE_THRSHOLD)), [-1])
             final_boxes = tf.gather(final_boxes, kept_indices)
             final_scores = tf.gather(final_scores, kept_indices)
             final_category = tf.gather(final_category, kept_indices)
@@ -117,7 +117,7 @@ class DetectionNetwork(object):
         :return:
         '''
 
-        with tf.name_scope('postprocess_fastrcnn_r'):
+        with tf.compat.v1.name_scope('postprocess_fastrcnn_r'):
             rois = tf.stop_gradient(rois)
             scores = tf.stop_gradient(scores)
             bbox_ppred = tf.reshape(bbox_ppred, [-1, cfgs.CLASS_NUM + 1, 5])
@@ -169,7 +169,7 @@ class DetectionNetwork(object):
             '''
             in training. We should show the detecitons in the tensorboard. So we add this.
             '''
-            kept_indices = tf.reshape(tf.where(tf.greater_equal(final_scores, cfgs.SHOW_SCORE_THRSHOLD)), [-1])
+            kept_indices = tf.reshape(tf.compat.v1.where(tf.greater_equal(final_scores, cfgs.SHOW_SCORE_THRSHOLD)), [-1])
             final_boxes = tf.gather(final_boxes, kept_indices)
             final_scores = tf.gather(final_scores, kept_indices)
             final_category = tf.gather(final_category, kept_indices)
@@ -185,9 +185,9 @@ class DetectionNetwork(object):
         :return:
         '''
 
-        with tf.variable_scope('ROI_Warping'):
+        with tf.compat.v1.variable_scope('ROI_Warping'):
             img_h, img_w = tf.cast(img_shape[1], tf.float32), tf.cast(img_shape[2], tf.float32)
-            N = tf.shape(rois)[0]
+            N = tf.shape(input=rois)[0]
             x1, y1, x2, y2 = tf.unstack(rois, axis=1)
 
             normalized_x1 = x1 / img_w
@@ -196,12 +196,12 @@ class DetectionNetwork(object):
             normalized_y2 = y2 / img_h
 
             normalized_rois = tf.transpose(
-                tf.stack([normalized_y1, normalized_x1, normalized_y2, normalized_x2]), name='get_normalized_rois')
+                a=tf.stack([normalized_y1, normalized_x1, normalized_y2, normalized_x2]), name='get_normalized_rois')
 
             normalized_rois = tf.stop_gradient(normalized_rois)
 
             cropped_roi_features = tf.image.crop_and_resize(feature_maps, normalized_rois,
-                                                            box_ind=tf.zeros(shape=[N, ],
+                                                            box_indices=tf.zeros(shape=[N, ],
                                                                              dtype=tf.int32),
                                                             crop_size=[cfgs.ROI_SIZE, cfgs.ROI_SIZE],
                                                             name='CROP_AND_RESIZE'
@@ -214,9 +214,9 @@ class DetectionNetwork(object):
 
     def build_fastrcnn(self, feature_to_cropped, rois, img_shape):
 
-        with tf.variable_scope('Fast-RCNN'):
+        with tf.compat.v1.variable_scope('Fast-RCNN'):
             # 5. ROI Pooling
-            with tf.variable_scope('rois_pooling'):
+            with tf.compat.v1.variable_scope('rois_pooling'):
                 pooled_features = self.roi_pooling(feature_maps=feature_to_cropped, rois=rois, img_shape=img_shape)
 
             # 6. inferecne rois in Fast-RCNN to obtain fc_flatten features
@@ -231,8 +231,8 @@ class DetectionNetwork(object):
                 raise NotImplementedError('only support resnet and mobilenet')
 
             # 7. cls and reg in Fast-RCNN
-            with tf.variable_scope('horizen_branch'):
-                with slim.arg_scope([slim.fully_connected], weights_regularizer=slim.l2_regularizer(cfgs.WEIGHT_DECAY)):
+            with tf.compat.v1.variable_scope('horizen_branch'):
+                with slim.arg_scope([slim.fully_connected], weights_regularizer=tf.keras.regularizers.l2(0.5 * (cfgs.WEIGHT_DECAY))):
 
                     cls_score_h = slim.fully_connected(fc_flatten,
                                                        num_outputs=cfgs.CLASS_NUM+1,
@@ -250,8 +250,8 @@ class DetectionNetwork(object):
                     cls_score_h = tf.reshape(cls_score_h, [-1, cfgs.CLASS_NUM+1])
                     bbox_pred_h = tf.reshape(bbox_pred_h, [-1, 4*(cfgs.CLASS_NUM+1)])
 
-            with tf.variable_scope('rotation_branch'):
-                with slim.arg_scope([slim.fully_connected], weights_regularizer=slim.l2_regularizer(cfgs.WEIGHT_DECAY)):
+            with tf.compat.v1.variable_scope('rotation_branch'):
+                with slim.arg_scope([slim.fully_connected], weights_regularizer=tf.keras.regularizers.l2(0.5 * (cfgs.WEIGHT_DECAY))):
                     cls_score_r = slim.fully_connected(fc_flatten,
                                                        num_outputs=cfgs.CLASS_NUM + 1,
                                                        weights_initializer=cfgs.INITIALIZER,
@@ -271,31 +271,31 @@ class DetectionNetwork(object):
 
     def add_anchor_img_smry(self, img, anchors, labels):
 
-        positive_anchor_indices = tf.reshape(tf.where(tf.greater_equal(labels, 1)), [-1])
-        negative_anchor_indices = tf.reshape(tf.where(tf.equal(labels, 0)), [-1])
+        positive_anchor_indices = tf.reshape(tf.compat.v1.where(tf.greater_equal(labels, 1)), [-1])
+        negative_anchor_indices = tf.reshape(tf.compat.v1.where(tf.equal(labels, 0)), [-1])
 
         positive_anchor = tf.gather(anchors, positive_anchor_indices)
         negative_anchor = tf.gather(anchors, negative_anchor_indices)
 
-        pos_in_img = show_box_in_tensor.draw_box_with_color(img, positive_anchor, tf.shape(positive_anchor)[0])
-        neg_in_img = show_box_in_tensor.draw_box_with_color(img, negative_anchor, tf.shape(positive_anchor)[0])
+        pos_in_img = show_box_in_tensor.draw_box_with_color(img, positive_anchor, tf.shape(input=positive_anchor)[0])
+        neg_in_img = show_box_in_tensor.draw_box_with_color(img, negative_anchor, tf.shape(input=positive_anchor)[0])
 
-        tf.summary.image('positive_anchor', pos_in_img)
-        tf.summary.image('negative_anchors', neg_in_img)
+        tf.compat.v1.summary.image('positive_anchor', pos_in_img)
+        tf.compat.v1.summary.image('negative_anchors', neg_in_img)
 
     def add_roi_batch_img_smry(self, img, rois, labels):
-        positive_roi_indices = tf.reshape(tf.where(tf.greater_equal(labels, 1)), [-1])
+        positive_roi_indices = tf.reshape(tf.compat.v1.where(tf.greater_equal(labels, 1)), [-1])
 
-        negative_roi_indices = tf.reshape(tf.where(tf.equal(labels, 0)), [-1])
+        negative_roi_indices = tf.reshape(tf.compat.v1.where(tf.equal(labels, 0)), [-1])
 
         pos_roi = tf.gather(rois, positive_roi_indices)
         neg_roi = tf.gather(rois, negative_roi_indices)
 
-        pos_in_img = show_box_in_tensor.draw_box_with_color(img, pos_roi, tf.shape(pos_roi)[0])
-        neg_in_img = show_box_in_tensor.draw_box_with_color(img, neg_roi, tf.shape(neg_roi)[0])
+        pos_in_img = show_box_in_tensor.draw_box_with_color(img, pos_roi, tf.shape(input=pos_roi)[0])
+        neg_in_img = show_box_in_tensor.draw_box_with_color(img, neg_roi, tf.shape(input=neg_roi)[0])
 
-        tf.summary.image('pos_rois', pos_in_img)
-        tf.summary.image('neg_rois', neg_in_img)
+        tf.compat.v1.summary.image('pos_rois', pos_in_img)
+        tf.compat.v1.summary.image('neg_rois', neg_in_img)
 
     def build_loss(self, rpn_box_pred, rpn_bbox_targets, rpn_cls_score, rpn_labels,
                    bbox_pred_h, bbox_targets_h, cls_score_h, bbox_pred_r, bbox_targets_r, cls_score_r, labels):
@@ -314,8 +314,8 @@ class DetectionNetwork(object):
         :param labels: [-1]
         :return:
         '''
-        with tf.variable_scope('build_loss') as sc:
-            with tf.variable_scope('rpn_loss'):
+        with tf.compat.v1.variable_scope('build_loss') as sc:
+            with tf.compat.v1.variable_scope('rpn_loss'):
 
                 rpn_bbox_loss = losses.smooth_l1_loss_rpn(bbox_pred=rpn_box_pred,
                                                           bbox_targets=rpn_bbox_targets,
@@ -325,16 +325,16 @@ class DetectionNetwork(object):
                 # rpn_cls_score = tf.reshape(rpn_cls_score, [-1, 2])
                 # rpn_labels = tf.reshape(rpn_labels, [-1])
                 # ensure rpn_labels shape is [-1]
-                rpn_select = tf.reshape(tf.where(tf.not_equal(rpn_labels, -1)), [-1])
+                rpn_select = tf.reshape(tf.compat.v1.where(tf.not_equal(rpn_labels, -1)), [-1])
                 rpn_cls_score = tf.reshape(tf.gather(rpn_cls_score, rpn_select), [-1, 2])
                 rpn_labels = tf.reshape(tf.gather(rpn_labels, rpn_select), [-1])
-                rpn_cls_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score,
+                rpn_cls_loss = tf.reduce_mean(input_tensor=tf.nn.sparse_softmax_cross_entropy_with_logits(logits=rpn_cls_score,
                                                                                              labels=rpn_labels))
 
                 rpn_cls_loss = rpn_cls_loss * cfgs.RPN_CLASSIFICATION_LOSS_WEIGHT
                 rpn_bbox_loss = rpn_bbox_loss * cfgs.RPN_LOCATION_LOSS_WEIGHT
 
-            with tf.variable_scope('FastRCNN_loss'):
+            with tf.compat.v1.variable_scope('FastRCNN_loss'):
                 if not cfgs.FAST_RCNN_MINIBATCH_SIZE == -1:
                     bbox_loss_h = losses.smooth_l1_loss_rcnn_h(bbox_pred=bbox_pred_h,
                                                                bbox_targets=bbox_targets_h,
@@ -344,7 +344,7 @@ class DetectionNetwork(object):
 
                     # cls_score = tf.reshape(cls_score, [-1, cfgs.CLASS_NUM + 1])
                     # labels = tf.reshape(labels, [-1])
-                    cls_loss_h = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    cls_loss_h = tf.reduce_mean(input_tensor=tf.nn.sparse_softmax_cross_entropy_with_logits(
                         logits=cls_score_h,
                         labels=labels))  # beacause already sample before
 
@@ -354,7 +354,7 @@ class DetectionNetwork(object):
                                                                num_classes=cfgs.CLASS_NUM + 1,
                                                                sigma=cfgs.FASTRCNN_SIGMA)
 
-                    cls_loss_r = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    cls_loss_r = tf.reduce_mean(input_tensor=tf.nn.sparse_softmax_cross_entropy_with_logits(
                         logits=cls_score_r,
                         labels=labels))
                 else:
@@ -394,14 +394,14 @@ class DetectionNetwork(object):
             gtboxes_r_batch = tf.cast(gtboxes_r_batch, tf.float32)
             gtboxes_h_batch = tf.cast(gtboxes_h_batch, tf.float32)
 
-        img_shape = tf.shape(input_img_batch)
+        img_shape = tf.shape(input=input_img_batch)
 
         # 1. build base network
         feature_to_cropped = self.build_base_network(input_img_batch)
 
         # 2. build rpn
-        with tf.variable_scope('build_rpn',
-                               regularizer=slim.l2_regularizer(cfgs.WEIGHT_DECAY)):
+        with tf.compat.v1.variable_scope('build_rpn',
+                               regularizer=tf.keras.regularizers.l2(0.5 * (cfgs.WEIGHT_DECAY))):
 
             rpn_conv3x3 = slim.conv2d(
                 feature_to_cropped, 512, [3, 3],
@@ -421,7 +421,7 @@ class DetectionNetwork(object):
             rpn_cls_prob = slim.softmax(rpn_cls_score, scope='rpn_cls_prob')
 
         # 3. generate_anchors
-        featuremap_height, featuremap_width = tf.shape(feature_to_cropped)[1], tf.shape(feature_to_cropped)[2]
+        featuremap_height, featuremap_width = tf.shape(input=feature_to_cropped)[1], tf.shape(input=feature_to_cropped)[2]
         featuremap_height = tf.cast(featuremap_height, tf.float32)
         featuremap_width = tf.cast(featuremap_width, tf.float32)
 
@@ -441,7 +441,7 @@ class DetectionNetwork(object):
         #                                         )
 
         # 4. postprocess rpn proposals. such as: decode, clip, NMS
-        with tf.variable_scope('postprocess_RPN'):
+        with tf.compat.v1.variable_scope('postprocess_RPN'):
             # rpn_cls_prob = tf.reshape(rpn_cls_score, [-1, 2])
             # rpn_cls_prob = slim.softmax(rpn_cls_prob, scope='rpn_cls_prob')
             # rpn_box_pred = tf.reshape(rpn_box_pred, [-1, 4])
@@ -457,46 +457,46 @@ class DetectionNetwork(object):
                 rois_in_img = show_box_in_tensor.draw_boxes_with_categories(img_batch=input_img_batch,
                                                                             boxes=rois,
                                                                             scores=roi_scores)
-                tf.summary.image('all_rpn_rois', rois_in_img)
+                tf.compat.v1.summary.image('all_rpn_rois', rois_in_img)
 
-                score_gre_05 = tf.reshape(tf.where(tf.greater_equal(roi_scores, 0.5)), [-1])
+                score_gre_05 = tf.reshape(tf.compat.v1.where(tf.greater_equal(roi_scores, 0.5)), [-1])
                 score_gre_05_rois = tf.gather(rois, score_gre_05)
                 score_gre_05_score = tf.gather(roi_scores, score_gre_05)
                 score_gre_05_in_img = show_box_in_tensor.draw_boxes_with_categories(img_batch=input_img_batch,
                                                                                     boxes=score_gre_05_rois,
                                                                                     scores=score_gre_05_score)
-                tf.summary.image('score_greater_05_rois', score_gre_05_in_img)
+                tf.compat.v1.summary.image('score_greater_05_rois', score_gre_05_in_img)
             # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         if self.is_training:
-            with tf.variable_scope('sample_anchors_minibatch'):
+            with tf.compat.v1.variable_scope('sample_anchors_minibatch'):
                 rpn_labels, rpn_bbox_targets = \
-                    tf.py_func(
+                    tf.compat.v1.py_func(
                         anchor_target_layer,
                         [gtboxes_h_batch, img_shape, anchors],
                         [tf.float32, tf.float32])
                 rpn_bbox_targets = tf.reshape(rpn_bbox_targets, [-1, 4])
-                rpn_labels = tf.to_int32(rpn_labels, name="to_int32")
+                rpn_labels = tf.cast(rpn_labels, name="to_int32", dtype=tf.int32)
                 rpn_labels = tf.reshape(rpn_labels, [-1])
                 self.add_anchor_img_smry(input_img_batch, anchors, rpn_labels)
 
             # --------------------------------------add smry-----------------------------------------------------------
 
-            rpn_cls_category = tf.argmax(rpn_cls_prob, axis=1)
-            kept_rpppn = tf.reshape(tf.where(tf.not_equal(rpn_labels, -1)), [-1])
+            rpn_cls_category = tf.argmax(input=rpn_cls_prob, axis=1)
+            kept_rpppn = tf.reshape(tf.compat.v1.where(tf.not_equal(rpn_labels, -1)), [-1])
             rpn_cls_category = tf.gather(rpn_cls_category, kept_rpppn)
-            acc = tf.reduce_mean(tf.to_float(tf.equal(rpn_cls_category, tf.to_int64(tf.gather(rpn_labels, kept_rpppn)))))
-            tf.summary.scalar('ACC/rpn_accuracy', acc)
+            acc = tf.reduce_mean(input_tensor=tf.cast(tf.equal(rpn_cls_category, tf.cast(tf.gather(rpn_labels, kept_rpppn), dtype=tf.int64)), dtype=tf.float32))
+            tf.compat.v1.summary.scalar('ACC/rpn_accuracy', acc)
 
             with tf.control_dependencies([rpn_labels]):
-                with tf.variable_scope('sample_RCNN_minibatch'):
+                with tf.compat.v1.variable_scope('sample_RCNN_minibatch'):
                     rois, labels, bbox_targets_h, bbox_targets_r = \
-                    tf.py_func(proposal_target_layer,
+                    tf.compat.v1.py_func(proposal_target_layer,
                                [rois, gtboxes_h_batch, gtboxes_r_batch],
                                [tf.float32, tf.float32, tf.float32, tf.float32])
 
                     rois = tf.reshape(rois, [-1, 4])
-                    labels = tf.to_int32(labels)
+                    labels = tf.cast(labels, dtype=tf.int32)
                     labels = tf.reshape(labels, [-1])
                     bbox_targets_h = tf.reshape(bbox_targets_h, [-1, 4*(cfgs.CLASS_NUM+1)])
                     bbox_targets_r = tf.reshape(bbox_targets_r, [-1, 5*(cfgs.CLASS_NUM+1)])
@@ -519,13 +519,13 @@ class DetectionNetwork(object):
 
         # ----------------------------------------------add smry-------------------------------------------------------
         if self.is_training:
-            cls_category_h = tf.argmax(cls_prob_h, axis=1)
-            fast_acc_h = tf.reduce_mean(tf.to_float(tf.equal(cls_category_h, tf.to_int64(labels))))
-            tf.summary.scalar('ACC/fast_acc_h', fast_acc_h)
+            cls_category_h = tf.argmax(input=cls_prob_h, axis=1)
+            fast_acc_h = tf.reduce_mean(input_tensor=tf.cast(tf.equal(cls_category_h, tf.cast(labels, dtype=tf.int64)), dtype=tf.float32))
+            tf.compat.v1.summary.scalar('ACC/fast_acc_h', fast_acc_h)
 
-            cls_category_r = tf.argmax(cls_prob_r, axis=1)
-            fast_acc_r = tf.reduce_mean(tf.to_float(tf.equal(cls_category_r, tf.to_int64(labels))))
-            tf.summary.scalar('ACC/fast_acc_r', fast_acc_r)
+            cls_category_r = tf.argmax(input=cls_prob_r, axis=1)
+            fast_acc_r = tf.reduce_mean(input_tensor=tf.cast(tf.equal(cls_category_r, tf.cast(labels, dtype=tf.int64)), dtype=tf.float32))
+            tf.compat.v1.summary.scalar('ACC/fast_acc_r', fast_acc_r)
 
         #  6. postprocess_fastrcnn
         if not self.is_training:
@@ -578,9 +578,9 @@ class DetectionNetwork(object):
                                     [slim.get_or_create_global_step()]
                 for var in restore_variables:
                     print(var.name)
-                restorer = tf.train.Saver(restore_variables)
+                restorer = tf.compat.v1.train.Saver(restore_variables)
             else:
-                restorer = tf.train.Saver()
+                restorer = tf.compat.v1.train.Saver()
             print("model restore from :", checkpoint_path)
         else:
             checkpoint_path = model_path
@@ -616,7 +616,7 @@ class DetectionNetwork(object):
                 print("var_in_graph: ", item.name)
                 print("var_in_ckpt: ", key)
                 print(20*"---")
-            restorer = tf.train.Saver(restore_variables)
+            restorer = tf.compat.v1.train.Saver(restore_variables)
             print(20 * "****")
             print("restore from pretrained_weighs in IMAGE_NET")
         return restorer, checkpoint_path
@@ -651,7 +651,7 @@ class DetectionNetwork(object):
     def enlarge_gradients_for_bias(self, gradients):
 
         final_gradients = []
-        with tf.variable_scope("Gradient_Mult") as scope:
+        with tf.compat.v1.variable_scope("Gradient_Mult") as scope:
             for grad, var in gradients:
                 scale = 1.0
                 if cfgs.MUTILPY_BIAS_GRADIENT and './biases' in var.name:

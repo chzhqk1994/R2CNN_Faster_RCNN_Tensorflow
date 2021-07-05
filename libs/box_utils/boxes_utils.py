@@ -46,7 +46,7 @@ def clip_boxes_to_img_boundaries(decode_boxes, img_shape):
     :return: decode boxes, and already clip to boundaries
     '''
 
-    with tf.name_scope('clip_boxes_to_img_boundaries'):
+    with tf.compat.v1.name_scope('clip_boxes_to_img_boundaries'):
 
         # xmin, ymin, xmax, ymax = tf.unstack(decode_boxes, axis=1)
         xmin = decode_boxes[:, 0]
@@ -63,7 +63,7 @@ def clip_boxes_to_img_boundaries(decode_boxes, img_shape):
         xmax = tf.maximum(tf.minimum(xmax, img_w-1.), 0.)
         ymax = tf.maximum(tf.minimum(ymax, img_h-1.), 0.)
 
-        return tf.transpose(tf.stack([xmin, ymin, xmax, ymax]))
+        return tf.transpose(a=tf.stack([xmin, ymin, xmax, ymax]))
 
 
 def filter_outside_boxes(boxes, img_h, img_w):
@@ -74,7 +74,7 @@ def filter_outside_boxes(boxes, img_h, img_w):
     :return: indices of anchors that inside the image boundary
     '''
 
-    with tf.name_scope('filter_outside_boxes'):
+    with tf.compat.v1.name_scope('filter_outside_boxes'):
         xmin, ymin, xmax, ymax = tf.unstack(boxes, axis=1)
 
         xmin_index = tf.greater_equal(xmin, 0)
@@ -82,10 +82,10 @@ def filter_outside_boxes(boxes, img_h, img_w):
         xmax_index = tf.less_equal(xmax, tf.cast(img_w, tf.float32))
         ymax_index = tf.less_equal(ymax, tf.cast(img_h, tf.float32))
 
-        indices = tf.transpose(tf.stack([xmin_index, ymin_index, xmax_index, ymax_index]))
+        indices = tf.transpose(a=tf.stack([xmin_index, ymin_index, xmax_index, ymax_index]))
         indices = tf.cast(indices, dtype=tf.int32)
-        indices = tf.reduce_sum(indices, axis=1)
-        indices = tf.where(tf.equal(indices, 4))
+        indices = tf.reduce_sum(input_tensor=indices, axis=1)
+        indices = tf.compat.v1.where(tf.equal(indices, 4))
         # indices = tf.equal(indices, 4)
         return tf.reshape(indices, [-1])
 
@@ -100,7 +100,7 @@ def padd_boxes_with_zeros(boxes, scores, max_num_of_boxes):
     :return:
     '''
 
-    pad_num = tf.cast(max_num_of_boxes, tf.int32) - tf.shape(boxes)[0]
+    pad_num = tf.cast(max_num_of_boxes, tf.int32) - tf.shape(input=boxes)[0]
 
     zero_boxes = tf.zeros(shape=[pad_num, 4], dtype=boxes.dtype)
     zero_scores = tf.zeros(shape=[pad_num], dtype=scores.dtype)
@@ -114,13 +114,13 @@ def padd_boxes_with_zeros(boxes, scores, max_num_of_boxes):
 
 def get_horizen_minAreaRectangle(boxs, with_label=True):
 
-    rpn_proposals_boxes_convert = tf.py_func(forward_convert,
+    rpn_proposals_boxes_convert = tf.compat.v1.py_func(forward_convert,
                                              inp=[boxs, with_label],
                                              Tout=tf.float32)
     if with_label:
         rpn_proposals_boxes_convert = tf.reshape(rpn_proposals_boxes_convert, [-1, 9])
 
-        boxes_shape = tf.shape(rpn_proposals_boxes_convert)
+        boxes_shape = tf.shape(input=rpn_proposals_boxes_convert)
         x_list = tf.strided_slice(rpn_proposals_boxes_convert, begin=[0, 0], end=[boxes_shape[0], boxes_shape[1] - 1],
                                   strides=[1, 2])
         y_list = tf.strided_slice(rpn_proposals_boxes_convert, begin=[0, 1], end=[boxes_shape[0], boxes_shape[1] - 1],
@@ -128,23 +128,23 @@ def get_horizen_minAreaRectangle(boxs, with_label=True):
 
         label = tf.unstack(rpn_proposals_boxes_convert, axis=1)[-1]
 
-        y_max = tf.reduce_max(y_list, axis=1)
-        y_min = tf.reduce_min(y_list, axis=1)
-        x_max = tf.reduce_max(x_list, axis=1)
-        x_min = tf.reduce_min(x_list, axis=1)
-        return tf.transpose(tf.stack([x_min, y_min, x_max, y_max, label], axis=0))
+        y_max = tf.reduce_max(input_tensor=y_list, axis=1)
+        y_min = tf.reduce_min(input_tensor=y_list, axis=1)
+        x_max = tf.reduce_max(input_tensor=x_list, axis=1)
+        x_min = tf.reduce_min(input_tensor=x_list, axis=1)
+        return tf.transpose(a=tf.stack([x_min, y_min, x_max, y_max, label], axis=0))
     else:
         rpn_proposals_boxes_convert = tf.reshape(rpn_proposals_boxes_convert, [-1, 8])
 
-        boxes_shape = tf.shape(rpn_proposals_boxes_convert)
+        boxes_shape = tf.shape(input=rpn_proposals_boxes_convert)
         x_list = tf.strided_slice(rpn_proposals_boxes_convert, begin=[0, 0], end=[boxes_shape[0], boxes_shape[1]],
                                   strides=[1, 2])
         y_list = tf.strided_slice(rpn_proposals_boxes_convert, begin=[0, 1], end=[boxes_shape[0], boxes_shape[1]],
                                   strides=[1, 2])
 
-        y_max = tf.reduce_max(y_list, axis=1)
-        y_min = tf.reduce_min(y_list, axis=1)
-        x_max = tf.reduce_max(x_list, axis=1)
-        x_min = tf.reduce_min(x_list, axis=1)
+        y_max = tf.reduce_max(input_tensor=y_list, axis=1)
+        y_min = tf.reduce_min(input_tensor=y_list, axis=1)
+        x_max = tf.reduce_max(input_tensor=x_list, axis=1)
+        x_min = tf.reduce_min(input_tensor=x_list, axis=1)
 
-    return tf.transpose(tf.stack([x_min, y_min, x_max, y_max], axis=0))
+    return tf.transpose(a=tf.stack([x_min, y_min, x_max, y_max], axis=0))

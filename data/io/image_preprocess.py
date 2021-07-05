@@ -15,14 +15,14 @@ def short_side_resize(img_tensor, gtboxes_and_label, target_shortside_len):
     :return:
     '''
 
-    h, w = tf.shape(img_tensor)[0], tf.shape(img_tensor)[1]
+    h, w = tf.shape(input=img_tensor)[0], tf.shape(input=img_tensor)[1]
 
-    new_h, new_w = tf.cond(tf.less(h, w),
+    new_h, new_w = tf.cond(pred=tf.less(h, w),
                            true_fn=lambda: (target_shortside_len, target_shortside_len * w//h),
                            false_fn=lambda: (target_shortside_len * h//w,  target_shortside_len))
 
     img_tensor = tf.expand_dims(img_tensor, axis=0)
-    img_tensor = tf.image.resize_bilinear(img_tensor, [new_h, new_w])
+    img_tensor = tf.image.resize(img_tensor, [new_h, new_w], method=tf.image.ResizeMethod.BILINEAR)
 
     x1, y1, x2, y2, x3, y3, x4, y4, label = tf.unstack(gtboxes_and_label, axis=1)
 
@@ -30,25 +30,25 @@ def short_side_resize(img_tensor, gtboxes_and_label, target_shortside_len):
     y1, y2, y3, y4 = y1 * new_h//h, y2 * new_h//h, y3 * new_h//h, y4 * new_h//h
 
     img_tensor = tf.squeeze(img_tensor, axis=0)  # ensure image tensor rank is 3
-    return img_tensor, tf.transpose(tf.stack([x1, y1, x2, y2, x3, y3, x4, y4, label], axis=0))
+    return img_tensor, tf.transpose(a=tf.stack([x1, y1, x2, y2, x3, y3, x4, y4, label], axis=0))
 
 
 def short_side_resize_for_inference_data(img_tensor, target_shortside_len, is_resize=True):
-    h, w, = tf.shape(img_tensor)[0], tf.shape(img_tensor)[1]
+    h, w, = tf.shape(input=img_tensor)[0], tf.shape(input=img_tensor)[1]
 
     img_tensor = tf.expand_dims(img_tensor, axis=0)
 
     if is_resize:
-        new_h, new_w = tf.cond(tf.less(h, w),
+        new_h, new_w = tf.cond(pred=tf.less(h, w),
                                true_fn=lambda: (target_shortside_len, target_shortside_len*w//h),
                                false_fn=lambda: (target_shortside_len*h//w, target_shortside_len))
-        img_tensor = tf.image.resize_bilinear(img_tensor, [new_h, new_w])
+        img_tensor = tf.image.resize(img_tensor, [new_h, new_w], method=tf.image.ResizeMethod.BILINEAR)
 
     return img_tensor  # [1, h, w, c]
 
 
 def flip_left_right(img_tensor, gtboxes_and_label):
-    h, w = tf.shape(img_tensor)[0], tf.shape(img_tensor)[1]
+    h, w = tf.shape(input=img_tensor)[0], tf.shape(input=img_tensor)[1]
     img_tensor = tf.image.flip_left_right(img_tensor)
 
     x1, y1, x2, y2, x3, y3, x4, y4, label = tf.unstack(gtboxes_and_label, axis=1)
@@ -56,14 +56,14 @@ def flip_left_right(img_tensor, gtboxes_and_label):
     new_x2 = w - x2
     new_x3 = w - x3
     new_x4 = w - x4
-    return img_tensor, tf.transpose(tf.stack([new_x1, y1, new_x2, y2, new_x3, y3, new_x4, y4, label], axis=0))
+    return img_tensor, tf.transpose(a=tf.stack([new_x1, y1, new_x2, y2, new_x3, y3, new_x4, y4, label], axis=0))
 
 
 def random_flip_left_right(img_tensor, gtboxes_and_label):
 
-    img_tensor, gtboxes_and_label = tf.cond(tf.less(tf.random_uniform(shape=[], minval=0, maxval=1), 0.5),
-                                            lambda: flip_left_right(img_tensor, gtboxes_and_label),
-                                            lambda: (img_tensor, gtboxes_and_label))
+    img_tensor, gtboxes_and_label = tf.cond(pred=tf.less(tf.random.uniform(shape=[], minval=0, maxval=1), 0.5),
+                                            true_fn=lambda: flip_left_right(img_tensor, gtboxes_and_label),
+                                            false_fn=lambda: (img_tensor, gtboxes_and_label))
 
     return img_tensor,  gtboxes_and_label
 

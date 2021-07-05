@@ -23,9 +23,9 @@ import copy
 import os
 
 import tensorflow as tf
+import tf_slim as slim
 
-
-slim = tf.contrib.slim
+#slim = tf.contrib.slim
 
 
 @slim.add_arg_scope
@@ -54,7 +54,7 @@ def _fixed_padding(inputs, kernel_size, rate=1):
   pad_total = [kernel_size_effective[0] - 1, kernel_size_effective[1] - 1]
   pad_beg = [pad_total[0] // 2, pad_total[1] // 2]
   pad_end = [pad_total[0] - pad_beg[0], pad_total[1] - pad_beg[1]]
-  padded_inputs = tf.pad(inputs, [[0, 0], [pad_beg[0], pad_end[0]],
+  padded_inputs = tf.pad(tensor=inputs, paddings=[[0, 0], [pad_beg[0], pad_end[0]],
                                   [pad_beg[1], pad_end[1]], [0, 0]])
   return padded_inputs
 
@@ -264,8 +264,8 @@ def mobilenet_base(  # pylint: disable=invalid-name
 
 @contextlib.contextmanager
 def _scope_all(scope, default_scope=None):
-  with tf.variable_scope(scope, default_name=default_scope) as s,\
-       tf.name_scope(s.original_name_scope):
+  with tf.compat.v1.variable_scope(scope, default_name=default_scope) as s,\
+       tf.compat.v1.name_scope(s.original_name_scope):
     yield s
 
 
@@ -321,7 +321,7 @@ def mobilenet(inputs,
   if len(input_shape) != 4:
     raise ValueError('Expected rank 4 input, was: %d' % len(input_shape))
 
-  with tf.variable_scope(scope, 'Mobilenet', reuse=reuse) as scope:
+  with tf.compat.v1.variable_scope(scope, 'Mobilenet', reuse=reuse) as scope:
     inputs = tf.identity(inputs, 'input')
     net, end_points = mobilenet_base(inputs, scope=scope, **mobilenet_args)
     if base_only:
@@ -329,7 +329,7 @@ def mobilenet(inputs,
 
     net = tf.identity(net, name='embedding')
 
-    with tf.variable_scope('Logits'):
+    with tf.compat.v1.variable_scope('Logits'):
       net = global_pool(net)
       end_points['global_pool'] = net
       if not num_classes:
@@ -342,7 +342,7 @@ def mobilenet(inputs,
           num_classes, [1, 1],
           activation_fn=None,
           normalizer_fn=None,
-          biases_initializer=tf.zeros_initializer(),
+          biases_initializer=tf.compat.v1.zeros_initializer(),
           scope='Conv2d_1c_1x1')
 
       logits = tf.squeeze(logits, [1, 2])
@@ -354,7 +354,7 @@ def mobilenet(inputs,
   return logits, end_points
 
 
-def global_pool(input_tensor, pool_op=tf.nn.avg_pool):
+def global_pool(input_tensor, pool_op=tf.nn.avg_pool2d):
   """Applies avg pool to produce 1x1 output.
 
   NOTE: This function is funcitonally equivalenet to reduce_mean, but it has
@@ -369,8 +369,8 @@ def global_pool(input_tensor, pool_op=tf.nn.avg_pool):
   shape = input_tensor.get_shape().as_list()
   if shape[1] is None or shape[2] is None:
     kernel_size = tf.convert_to_tensor(
-        [1, tf.shape(input_tensor)[1],
-         tf.shape(input_tensor)[2], 1])
+        value=[1, tf.shape(input=input_tensor)[1],
+         tf.shape(input=input_tensor)[2], 1])
   else:
     kernel_size = [1, shape[1], shape[2], 1]
   output = pool_op(
@@ -417,7 +417,7 @@ def training_scope(is_training=True,
   if stddev < 0:
     weight_intitializer = slim.initializers.xavier_initializer()
   else:
-    weight_intitializer = tf.truncated_normal_initializer(stddev=stddev)
+    weight_intitializer = tf.compat.v1.truncated_normal_initializer(stddev=stddev)
 
   # Set weight_decay for weights in Conv and FC layers.
   with slim.arg_scope(
@@ -429,6 +429,6 @@ def training_scope(is_training=True,
       slim.arg_scope([slim.dropout], is_training=is_training,
                      keep_prob=dropout_keep_prob), \
       slim.arg_scope([slim.conv2d], \
-                     weights_regularizer=slim.l2_regularizer(weight_decay)), \
+                     weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay))), \
       slim.arg_scope([slim.separable_conv2d], weights_regularizer=None) as s:
     return s

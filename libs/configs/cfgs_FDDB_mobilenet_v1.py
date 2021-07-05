@@ -69,8 +69,8 @@ CLASS_NUM = 1
 
 # --------------------------------------------- Network_config
 BATCH_SIZE = 1
-INITIALIZER = tf.random_normal_initializer(mean=0.0, stddev=0.01)
-BBOX_INITIALIZER = tf.random_normal_initializer(mean=0.0, stddev=0.001)
+INITIALIZER = tf.compat.v1.random_normal_initializer(mean=0.0, stddev=0.01)
+BBOX_INITIALIZER = tf.compat.v1.random_normal_initializer(mean=0.0, stddev=0.001)
 WEIGHT_DECAY = 0.0001
 
 

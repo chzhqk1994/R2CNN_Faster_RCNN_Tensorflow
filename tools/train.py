@@ -5,7 +5,8 @@ from __future__ import print_function
 from __future__ import division
 
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
+import tf_slim as slim
 import os, sys
 sys.path.append("../")
 import numpy as np
@@ -26,14 +27,14 @@ def train():
     faster_rcnn = build_whole_network.DetectionNetwork(base_network_name=cfgs.NET_NAME,
                                                        is_training=True)
 
-    with tf.name_scope('get_batch'):
+    with tf.compat.v1.name_scope('get_batch'):
         img_name_batch, img_batch, gtboxes_and_label_batch, num_objects_batch = \
             next_batch(dataset_name=cfgs.DATASET_NAME,  # 'pascal', 'coco'
                        batch_size=cfgs.BATCH_SIZE,
                        shortside_len=cfgs.IMG_SHORT_SIDE_LEN,
                        is_training=True)
 
-        gtboxes_and_label = tf.py_func(back_forward_convert,
+        gtboxes_and_label = tf.compat.v1.py_func(back_forward_convert,
                                        inp=[tf.squeeze(gtboxes_and_label_batch, 0)],
                                        Tout=tf.float32)
         gtboxes_and_label = tf.reshape(gtboxes_and_label, [-1, 6])
@@ -47,35 +48,35 @@ def train():
                        shortside_len=cfgs.IMG_SHORT_SIDE_LEN,
                        is_training=False)
 
-        eval_gtboxes_and_label = tf.py_func(back_forward_convert,
+        eval_gtboxes_and_label = tf.compat.v1.py_func(back_forward_convert,
                                        inp=[tf.squeeze(eval_gtboxes_and_label_batch, 0)],
                                        Tout=tf.float32)
         eval_gtboxes_and_label = tf.reshape(eval_gtboxes_and_label, [-1, 6])
 
         eval_gtboxes_and_label_AreaRectangle = get_horizen_minAreaRectangle(eval_gtboxes_and_label)
         eval_gtboxes_and_label_AreaRectangle = tf.reshape(eval_gtboxes_and_label_AreaRectangle, [-1, 5])
-    with tf.name_scope('draw_gtboxes'):
+    with tf.compat.v1.name_scope('draw_gtboxes'):
         gtboxes_in_img = draw_box_with_color(img_batch, tf.reshape(gtboxes_and_label_AreaRectangle, [-1, 5])[:, :-1],
-                                             text=tf.shape(gtboxes_and_label_AreaRectangle)[0])
+                                             text=tf.shape(input=gtboxes_and_label_AreaRectangle)[0])
 
         gtboxes_rotate_in_img = draw_box_with_color_rotate(img_batch, tf.reshape(gtboxes_and_label, [-1, 6])[:, :-1],
-                                                           text=tf.shape(gtboxes_and_label)[0])
+                                                           text=tf.shape(input=gtboxes_and_label)[0])
 														   
         eval_gtboxes_in_img = draw_box_with_color(eval_img_batch, tf.reshape(eval_gtboxes_and_label_AreaRectangle, [-1, 5])[:, :-1],
-                                             text=tf.shape(eval_gtboxes_and_label_AreaRectangle)[0])
+                                             text=tf.shape(input=eval_gtboxes_and_label_AreaRectangle)[0])
 
         eval_gtboxes_rotate_in_img = draw_box_with_color_rotate(eval_img_batch, tf.reshape(eval_gtboxes_and_label, [-1, 6])[:, :-1],
-                                                           text=tf.shape(eval_gtboxes_and_label)[0])
+                                                           text=tf.shape(input=eval_gtboxes_and_label)[0])
 
-    biases_regularizer = tf.no_regularizer
-    weights_regularizer = tf.contrib.layers.l2_regularizer(cfgs.WEIGHT_DECAY)
+    biases_regularizer = tf.compat.v1.no_regularizer
+    weights_regularizer = tf.keras.regularizers.l2(0.5 * (cfgs.WEIGHT_DECAY))
 
     # list as many types of layers as possible, even if they are not used now
     with slim.arg_scope([slim.conv2d, slim.conv2d_in_plane,
                          slim.conv2d_transpose, slim.separable_conv2d, slim.fully_connected],
                         weights_regularizer=weights_regularizer,
                         biases_regularizer=biases_regularizer,
-                        biases_initializer=tf.constant_initializer(0.0)):
+                        biases_initializer=tf.compat.v1.constant_initializer(0.0)):
         final_boxes_h, final_scores_h, final_category_h, \
         final_boxes_r, final_scores_r, final_category_r, loss_dict = faster_rcnn.build_whole_detection_network(
             input_img_batch=img_batch,
@@ -108,32 +109,32 @@ def train():
     # ---------------------------------------------------------------------------------------------build loss
 
     # ---------------------------------------------------------------------------------------------------add summary
-    tf.summary.scalar('RPN_LOSS/cls_loss', rpn_cls_loss)
-    tf.summary.scalar('RPN_LOSS/location_loss', rpn_location_loss)
-    tf.summary.scalar('RPN_LOSS/rpn_total_loss', rpn_total_loss)
+    tf.compat.v1.summary.scalar('RPN_LOSS/cls_loss', rpn_cls_loss)
+    tf.compat.v1.summary.scalar('RPN_LOSS/location_loss', rpn_location_loss)
+    tf.compat.v1.summary.scalar('RPN_LOSS/rpn_total_loss', rpn_total_loss)
 
-    tf.summary.scalar('FAST_LOSS/fastrcnn_cls_loss_h', fastrcnn_cls_loss_h)
-    tf.summary.scalar('FAST_LOSS/fastrcnn_location_loss_h', fastrcnn_loc_loss_h)
-    tf.summary.scalar('FAST_LOSS/fastrcnn_cls_loss_r', fastrcnn_cls_loss_r)
-    tf.summary.scalar('FAST_LOSS/fastrcnn_location_loss_r', fastrcnn_loc_loss_r)
-    tf.summary.scalar('FAST_LOSS/fastrcnn_total_loss', fastrcnn_total_loss)
+    tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_cls_loss_h', fastrcnn_cls_loss_h)
+    tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_location_loss_h', fastrcnn_loc_loss_h)
+    tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_cls_loss_r', fastrcnn_cls_loss_r)
+    tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_location_loss_r', fastrcnn_loc_loss_r)
+    tf.compat.v1.summary.scalar('FAST_LOSS/fastrcnn_total_loss', fastrcnn_total_loss)
 
-    tf.summary.scalar('LOSS/total_loss', total_loss)
-    tf.summary.scalar('LOSS/regular_weights', weight_decay_loss)
+    tf.compat.v1.summary.scalar('LOSS/total_loss', total_loss)
+    tf.compat.v1.summary.scalar('LOSS/regular_weights', weight_decay_loss)
 
-    tf.summary.image('img/gtboxes', gtboxes_in_img)
-    tf.summary.image('img/gtboxes_rotate', gtboxes_rotate_in_img)
-    tf.summary.image('img/dets', dets_in_img)
-    tf.summary.image('img/dets_rotate', dets_rotate_in_img)
+    tf.compat.v1.summary.image('img/gtboxes', gtboxes_in_img)
+    tf.compat.v1.summary.image('img/gtboxes_rotate', gtboxes_rotate_in_img)
+    tf.compat.v1.summary.image('img/dets', dets_in_img)
+    tf.compat.v1.summary.image('img/dets_rotate', dets_rotate_in_img)
 
     # ---------------------------------------------------------------------------------------------add summary
 
     global_step = slim.get_or_create_global_step()
-    lr = tf.train.piecewise_constant(global_step,
+    lr = tf.compat.v1.train.piecewise_constant(global_step,
                                      boundaries=[np.int64(cfgs.DECAY_STEP[0]), np.int64(cfgs.DECAY_STEP[1])],
                                      values=[cfgs.LR, cfgs.LR / 10., cfgs.LR / 100.])
-    tf.summary.scalar('lr', lr)
-    optimizer = tf.train.MomentumOptimizer(lr, momentum=cfgs.MOMENTUM)
+    tf.compat.v1.summary.scalar('lr', lr)
+    optimizer = tf.compat.v1.train.MomentumOptimizer(lr, momentum=cfgs.MOMENTUM)
 
     # ---------------------------------------------------------------------------------------------compute gradients
     gradients = faster_rcnn.get_gradients(optimizer, total_loss)
@@ -143,7 +144,7 @@ def train():
         gradients = faster_rcnn.enlarge_gradients_for_bias(gradients)
 
     if cfgs.GRADIENT_CLIPPING_BY_NORM:
-        with tf.name_scope('clip_gradients'):
+        with tf.compat.v1.name_scope('clip_gradients'):
             gradients = slim.learning.clip_gradient_norms(gradients,
                                                           cfgs.GRADIENT_CLIPPING_BY_NORM)
     # ---------------------------------------------------------------------------------------------compute gradients
@@ -151,29 +152,29 @@ def train():
     # train_op
     train_op = optimizer.apply_gradients(grads_and_vars=gradients,
                                          global_step=global_step)
-    summary_op = tf.summary.merge_all()
+    summary_op = tf.compat.v1.summary.merge_all()
     init_op = tf.group(
-        tf.global_variables_initializer(),
-        tf.local_variables_initializer()
+        tf.compat.v1.global_variables_initializer(),
+        tf.compat.v1.local_variables_initializer()
     )
 
     restorer, restore_ckpt = faster_rcnn.get_restorer()
-    saver = tf.train.Saver(max_to_keep=10)
+    saver = tf.compat.v1.train.Saver(max_to_keep=10)
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
 
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sess.run(init_op)
         if not restorer is None:
             restorer.restore(sess, restore_ckpt)
             print('restore model')
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess, coord)
+        threads = tf.compat.v1.train.start_queue_runners(sess, coord)
 
         summary_path = os.path.join(cfgs.SUMMARY_PATH, cfgs.VERSION)
         tools.mkdir(summary_path)
-        summary_writer = tf.summary.FileWriter(summary_path, graph=sess.graph)
+        summary_writer = tf.compat.v1.summary.FileWriter(summary_path, graph=sess.graph)
 
         for step in range(cfgs.MAX_ITERATION):
             training_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))

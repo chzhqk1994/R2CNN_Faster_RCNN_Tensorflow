@@ -4,11 +4,12 @@ from __future__ import absolute_import, print_function, division
 
 
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
+import tf_slim as slim
 from libs.configs import cfgs
-from tensorflow.contrib.slim.nets import resnet_v1
-from tensorflow.contrib.slim.nets import resnet_utils
-from tensorflow.contrib.slim.python.slim.nets.resnet_v1 import resnet_v1_block
+#from tf_slim.nets import resnet_v1
+#from tf_slim.nets import resnet_utils
+#from tf_slim.python.slim.nets.resnet_v1 import resnet_v1_block
 
 
 def resnet_arg_scope(
@@ -24,13 +25,13 @@ def resnet_arg_scope(
         'is_training': False, 'decay': batch_norm_decay,
         'epsilon': batch_norm_epsilon, 'scale': batch_norm_scale,
         'trainable': False,
-        'updates_collections': tf.GraphKeys.UPDATE_OPS
+        'updates_collections': tf.compat.v1.GraphKeys.UPDATE_OPS
     }
 
     with slim.arg_scope(
             [slim.conv2d],
-            weights_regularizer=slim.l2_regularizer(weight_decay),
-            weights_initializer=slim.variance_scaling_initializer(),
+            weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay)),
+            weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=2.0),
             trainable=is_training,
             activation_fn=tf.nn.relu,
             normalizer_fn=slim.batch_norm,
@@ -53,20 +54,20 @@ def resnet_base(img_batch, scope_name, is_training=True):
     else:
         raise NotImplementedError('We only support resnet_v1_50 or resnet_v1_101. Check your network name....yjr')
 
-    blocks = [resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
-              resnet_v1_block('block2', base_depth=128, num_units=4, stride=2),
+    blocks = [tf_slim.nets.resnet_v1.resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
+              tf_slim.nets.resnet_v1.resnet_v1_block('block2', base_depth=128, num_units=4, stride=2),
               # use stride 1 for the last conv4 layer.
 
-              resnet_v1_block('block3', base_depth=256, num_units=middle_num_units, stride=1)]
+              tf_slim.nets.resnet_v1.resnet_v1_block('block3', base_depth=256, num_units=middle_num_units, stride=1)]
               # when use fpn . stride list is [1, 2, 2]
 
     with slim.arg_scope(resnet_arg_scope(is_training=False)):
-        with tf.variable_scope(scope_name, scope_name):
+        with tf.compat.v1.variable_scope(scope_name, scope_name):
             # Do the first few layers manually, because 'SAME' padding can behave inconsistently
             # for images of different sizes: sometimes 0, sometimes 1
             net = resnet_utils.conv2d_same(
                 img_batch, 64, 7, stride=2, scope='conv1')
-            net = tf.pad(net, [[0, 0], [1, 1], [1, 1], [0, 0]])
+            net = tf.pad(tensor=net, paddings=[[0, 0], [1, 1], [1, 1], [0, 0]])
             net = slim.max_pool2d(
                 net, [3, 3], stride=2, padding='VALID', scope='pool1')
 
@@ -112,7 +113,7 @@ def restnet_head(input, is_training, scope_name):
                                     include_root_block=False,
                                     scope=scope_name)
         # C5 = tf.Print(C5, [tf.shape(C5)], summarize=10, message='C5_shape')
-        C5_flatten = tf.reduce_mean(C5, axis=[1, 2], keep_dims=False, name='global_average_pooling')
+        C5_flatten = tf.reduce_mean(input_tensor=C5, axis=[1, 2], keepdims=False, name='global_average_pooling')
         # C5_flatten = tf.Print(C5_flatten, [tf.shape(C5_flatten)], summarize=10, message='C5_flatten_shape')
 
     # global average pooling C5 to obtain fc layers

@@ -42,11 +42,11 @@ def draw_box_with_color(img_batch, boxes, text):
 
     img_tensor = tf.squeeze(img_batch, 0)
     # color = tf.constant([0, 0, 255])
-    img_tensor_with_boxes = tf.py_func(draw_box_cv,
+    img_tensor_with_boxes = tf.compat.v1.py_func(draw_box_cv,
                                        inp=[img_tensor, boxes, text],
                                        Tout=[tf.uint8])
 
-    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(img_batch))
+    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(input=img_batch))
 
     return img_tensor_with_boxes
 
@@ -77,11 +77,11 @@ def draw_box_with_color_rotate(img_batch, boxes, text):
         return img
 
     img_tensor = tf.squeeze(img_batch, 0)
-    img_tensor_with_boxes = tf.py_func(draw_box_cv,
+    img_tensor_with_boxes = tf.compat.v1.py_func(draw_box_cv,
                                        inp=[img_tensor, boxes, text],
                                        Tout=[tf.uint8])
 
-    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(img_batch))
+    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(input=img_batch))
 
     return img_tensor_with_boxes
 
@@ -128,10 +128,10 @@ def draw_boxes_with_categories(img_batch, boxes, scores):
         return img
 
     img_tensor = tf.squeeze(img_batch, 0)
-    img_tensor_with_boxes = tf.py_func(draw_box_cv,
+    img_tensor_with_boxes = tf.compat.v1.py_func(draw_box_cv,
                                        inp=[img_tensor, boxes, scores],
                                        Tout=[tf.uint8])
-    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(img_batch))
+    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(input=img_batch))
     return img_tensor_with_boxes
 
 
@@ -180,10 +180,10 @@ def draw_boxes_with_categories_and_scores(img_batch, boxes, labels, scores):
         return img
 
     img_tensor = tf.squeeze(img_batch, 0)
-    img_tensor_with_boxes = tf.py_func(draw_box_cv,
+    img_tensor_with_boxes = tf.compat.v1.py_func(draw_box_cv,
                                        inp=[img_tensor, boxes, labels, scores],
                                        Tout=[tf.uint8])
-    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(img_batch))
+    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(input=img_batch))
     return img_tensor_with_boxes
 
 
@@ -233,10 +233,10 @@ def draw_boxes_with_categories_and_scores_rotate(img_batch, boxes, labels, score
         return img
 
     img_tensor = tf.squeeze(img_batch, 0)
-    img_tensor_with_boxes = tf.py_func(draw_box_cv,
+    img_tensor_with_boxes = tf.compat.v1.py_func(draw_box_cv,
                                        inp=[img_tensor, boxes, labels, scores],
                                        Tout=[tf.uint8])
-    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(img_batch))
+    img_tensor_with_boxes = tf.reshape(img_tensor_with_boxes, tf.shape(input=img_batch))
     return img_tensor_with_boxes
 
 

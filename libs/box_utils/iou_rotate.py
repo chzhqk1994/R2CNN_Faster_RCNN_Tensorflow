@@ -23,14 +23,14 @@ def iou_rotate_calculate(boxes1, boxes2, use_gpu=True, gpu_id=0):
     boxes2 = tf.cast(boxes2, tf.float32)
     if use_gpu:
 
-        iou_matrix = tf.py_func(rbbx_overlaps,
+        iou_matrix = tf.compat.v1.py_func(rbbx_overlaps,
                                 inp=[boxes1, boxes2, gpu_id],
                                 Tout=tf.float32)
     else:
-        iou_matrix = tf.py_func(get_iou_matrix, inp=[boxes1, boxes2],
+        iou_matrix = tf.compat.v1.py_func(get_iou_matrix, inp=[boxes1, boxes2],
                                 Tout=tf.float32)
 
-    iou_matrix = tf.reshape(iou_matrix, [tf.shape(boxes1)[0], tf.shape(boxes2)[0]])
+    iou_matrix = tf.reshape(iou_matrix, [tf.shape(input=boxes1)[0], tf.shape(input=boxes2)[0]])
 
     return iou_matrix
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                        [200, 200, 100, 200, 0.]], np.float32)
 
     start = time.time()
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         ious = iou_rotate_calculate1(boxes1, boxes2, use_gpu=False)
         print(sess.run(ious))
         print('{}s'.format(time.time() - start))

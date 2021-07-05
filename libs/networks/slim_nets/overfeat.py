@@ -34,14 +34,14 @@ from __future__ import print_function
 import tensorflow as tf
 
 slim = tf.contrib.slim
-trunc_normal = lambda stddev: tf.truncated_normal_initializer(0.0, stddev)
+trunc_normal = lambda stddev: tf.compat.v1.truncated_normal_initializer(0.0, stddev)
 
 
 def overfeat_arg_scope(weight_decay=0.0005):
   with slim.arg_scope([slim.conv2d, slim.fully_connected],
                       activation_fn=tf.nn.relu,
-                      weights_regularizer=slim.l2_regularizer(weight_decay),
-                      biases_initializer=tf.zeros_initializer()):
+                      weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay)),
+                      biases_initializer=tf.compat.v1.zeros_initializer()):
     with slim.arg_scope([slim.conv2d], padding='SAME'):
       with slim.arg_scope([slim.max_pool2d], padding='VALID') as arg_sc:
         return arg_sc
@@ -80,7 +80,7 @@ def overfeat(inputs,
     the last op containing the log predictions and end_points dict.
 
   """
-  with tf.variable_scope(scope, 'overfeat', [inputs]) as sc:
+  with tf.compat.v1.variable_scope(scope, 'overfeat', [inputs]) as sc:
     end_points_collection = sc.name + '_end_points'
     # Collect outputs for conv2d, fully_connected and max_pool2d
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d],
@@ -96,7 +96,7 @@ def overfeat(inputs,
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
       with slim.arg_scope([slim.conv2d],
                           weights_initializer=trunc_normal(0.005),
-                          biases_initializer=tf.constant_initializer(0.1)):
+                          biases_initializer=tf.compat.v1.constant_initializer(0.1)):
         # Use conv2d instead of fully_connected layers.
         net = slim.conv2d(net, 3072, [6, 6], padding='VALID', scope='fc6')
         net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
@@ -107,7 +107,7 @@ def overfeat(inputs,
         net = slim.conv2d(net, num_classes, [1, 1],
                           activation_fn=None,
                           normalizer_fn=None,
-                          biases_initializer=tf.zeros_initializer(),
+                          biases_initializer=tf.compat.v1.zeros_initializer(),
                           scope='fc8')
       # Convert end_points_collection into a end_point dict.
       end_points = slim.utils.convert_collection_to_dict(end_points_collection)
